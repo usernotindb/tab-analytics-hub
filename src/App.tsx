@@ -7,7 +7,15 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { MainLayout } from "./components/layout/MainLayout";
 import Dashboard from "./pages/Dashboard";
 import Customers from "./pages/Customers";
+import CustomerDetails from "./pages/CustomerDetails";
 import Portals from "./pages/Portals";
+import PortalDetails from "./pages/PortalDetails";
+import PaidSoftware from "./pages/PaidSoftware";
+import PortalStatusReady from "./pages/PortalStatusReady";
+import PortalStatusNotReady from "./pages/PortalStatusNotReady";
+import BankApplicationsSubmitted from "./pages/BankApplicationsSubmitted";
+import BankApplicationsUnsubmitted from "./pages/BankApplicationsUnsubmitted";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,10 +44,74 @@ const App = () => (
             } 
           />
           <Route 
+            path="/customers/:id" 
+            element={
+              <MainLayout>
+                <CustomerDetails />
+              </MainLayout>
+            } 
+          />
+          <Route 
             path="/portals" 
             element={
               <MainLayout>
                 <Portals />
+              </MainLayout>
+            } 
+          />
+          <Route 
+            path="/portals/:id" 
+            element={
+              <MainLayout>
+                <PortalDetails />
+              </MainLayout>
+            } 
+          />
+          <Route 
+            path="/paid-software" 
+            element={
+              <MainLayout>
+                <PaidSoftware />
+              </MainLayout>
+            } 
+          />
+          <Route 
+            path="/portal-status/ready" 
+            element={
+              <MainLayout>
+                <PortalStatusReady />
+              </MainLayout>
+            } 
+          />
+          <Route 
+            path="/portal-status/not-ready" 
+            element={
+              <MainLayout>
+                <PortalStatusNotReady />
+              </MainLayout>
+            } 
+          />
+          <Route 
+            path="/bank-applications/submitted" 
+            element={
+              <MainLayout>
+                <BankApplicationsSubmitted />
+              </MainLayout>
+            } 
+          />
+          <Route 
+            path="/bank-applications/unsubmitted" 
+            element={
+              <MainLayout>
+                <BankApplicationsUnsubmitted />
+              </MainLayout>
+            } 
+          />
+          <Route 
+            path="/settings" 
+            element={
+              <MainLayout>
+                <Settings />
               </MainLayout>
             } 
           />
