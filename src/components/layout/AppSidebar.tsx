@@ -23,7 +23,7 @@ import {
   Database,
   CheckCircle,
   XCircle,
-  BankIcon,
+  Building2, // Changed from BankIcon to Building2
   LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -76,7 +76,7 @@ export function AppSidebar() {
     {
       title: "Bank Applications",
       path: "/bank-applications",
-      icon: BankIcon,
+      icon: Building2, // Changed from BankIcon to Building2
       subItems: [
         {
           title: "Submitted",

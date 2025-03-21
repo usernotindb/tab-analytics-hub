@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -28,8 +27,22 @@ import {
 import { Plus, MoreHorizontal, Search, UserPlus, Edit, Trash, Eye } from "lucide-react";
 import CustomerWizard from "@/components/customer/CustomerWizard";
 
-// Sample data - in a real app, this would come from your API
-const sampleCustomers = [
+interface Customer {
+  id: number;
+  userId: string;
+  efin: string;
+  company: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  businessPhone: string;
+  cellPhone: string;
+  portalReady: boolean;
+  bankAppSubmitted: boolean;
+  softwarePaid: boolean;
+}
+
+const sampleCustomers: Customer[] = [
   {
     id: 1,
     userId: "14545807",
@@ -90,7 +103,7 @@ const sampleCustomers = [
 
 const Customers = () => {
   const { toast } = useToast();
-  const [customers, setCustomers] = useState(sampleCustomers);
+  const [customers, setCustomers] = useState<Customer[]>(sampleCustomers);
   const [searchTerm, setSearchTerm] = useState("");
   const [isWizardOpen, setIsWizardOpen] = useState(false);
 
@@ -113,6 +126,30 @@ const Customers = () => {
     });
   };
 
+  const addNewCustomer = (data: any) => {
+    const newCustomer: Customer = {
+      id: customers.length + 1,
+      userId: `1454${Math.floor(Math.random() * 10000)}`,
+      efin: data.efin || "",
+      company: data.company || "",
+      firstName: data.firstName || "",
+      lastName: data.lastName || "",
+      email: data.email || "",
+      businessPhone: data.businessPhone || "",
+      cellPhone: data.cellPhone || "",
+      portalReady: false,
+      bankAppSubmitted: false,
+      softwarePaid: false,
+    };
+    
+    setCustomers([...customers, newCustomer]);
+    setIsWizardOpen(false);
+    toast({
+      title: "Customer added",
+      description: "The new customer has been successfully added.",
+    });
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex justify-between items-center">
@@ -131,21 +168,7 @@ const Customers = () => {
             </DialogHeader>
             <div className="py-4">
               <CustomerWizard 
-                onComplete={(data) => {
-                  setCustomers([...customers, {
-                    id: customers.length + 1,
-                    userId: `1454${Math.floor(Math.random() * 10000)}`,
-                    ...data,
-                    portalReady: false,
-                    bankAppSubmitted: false,
-                    softwarePaid: false,
-                  }]);
-                  setIsWizardOpen(false);
-                  toast({
-                    title: "Customer added",
-                    description: "The new customer has been successfully added.",
-                  });
-                }}
+                onComplete={addNewCustomer}
               />
             </div>
           </DialogContent>
