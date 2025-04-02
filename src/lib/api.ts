@@ -1,34 +1,28 @@
 
 import { Customer, Portal, SoftwarePayment, BankApplication, TimelineEvent, User } from './schema';
-
-// This file contains all API functions to interact with the database
-// When connecting to MySQL, replace these functions with actual MySQL queries
+import { query, queryOne } from './db';
 
 // ------------------------
 // Customer API Functions
 // ------------------------
 
 export async function getCustomers(): Promise<Customer[]> {
-  // In a real implementation, you would connect to MySQL and fetch customers
-  // Example: const result = await db.query('SELECT * FROM customers');
-  return [];
+  return await query<Customer>('SELECT * FROM customers ORDER BY created_at DESC');
 }
 
 export async function getCustomerById(id: number): Promise<Customer | null> {
-  // Example: const result = await db.query('SELECT * FROM customers WHERE id = ?', [id]);
-  return null;
+  return await queryOne<Customer>('SELECT * FROM customers WHERE id = ?', [id]);
 }
 
 export async function createCustomer(customer: Omit<Customer, 'id' | 'created_at' | 'updated_at'>): Promise<Customer> {
-  // Example: 
-  // const result = await db.query(
-  //   'INSERT INTO customers (name, email, phone, address, city, state, zipCode, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-  //   [customer.name, customer.email, customer.phone, customer.address, customer.city, customer.state, customer.zipCode, customer.status]
-  // );
+  const result = await query(
+    'INSERT INTO customers (name, email, phone, address, city, state, zipCode, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+    [customer.name, customer.email, customer.phone, customer.address, customer.city, customer.state, customer.zipCode, customer.status]
+  );
   
-  // Return the newly created customer
+  const insertId = result[0].insertId;
   return {
-    id: 0,
+    id: insertId,
     ...customer,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
@@ -36,22 +30,25 @@ export async function createCustomer(customer: Omit<Customer, 'id' | 'created_at
 }
 
 export async function updateCustomer(id: number, customer: Partial<Customer>): Promise<Customer | null> {
-  // Example: Update only the provided fields
-  // const updates = Object.entries(customer)
-  //   .filter(([key]) => key !== 'id' && key !== 'created_at' && key !== 'updated_at')
-  //   .map(([key, value]) => `${key} = ?`);
+  const updates = Object.entries(customer)
+    .filter(([key]) => key !== 'id' && key !== 'created_at' && key !== 'updated_at')
+    .map(([key]) => `${key} = ?`);
   
-  // if (updates.length === 0) return null;
+  if (updates.length === 0) return null;
   
-  // const query = `UPDATE customers SET ${updates.join(', ')}, updated_at = NOW() WHERE id = ?`;
-  // await db.query(query, [...Object.values(customer), id]);
+  const values = Object.entries(customer)
+    .filter(([key]) => key !== 'id' && key !== 'created_at' && key !== 'updated_at')
+    .map(([_, value]) => value);
   
-  return null;
+  const query = `UPDATE customers SET ${updates.join(', ')}, updated_at = NOW() WHERE id = ?`;
+  await query(query, [...values, id]);
+  
+  return await getCustomerById(id);
 }
 
 export async function deleteCustomer(id: number): Promise<boolean> {
-  // Example: await db.query('DELETE FROM customers WHERE id = ?', [id]);
-  return true;
+  const result = await query('DELETE FROM customers WHERE id = ?', [id]);
+  return result[0].affectedRows > 0;
 }
 
 // ------------------------
@@ -59,24 +56,26 @@ export async function deleteCustomer(id: number): Promise<boolean> {
 // ------------------------
 
 export async function getPortals(): Promise<Portal[]> {
-  // Example: const result = await db.query('SELECT * FROM portals');
-  return [];
+  return await query<Portal>('SELECT * FROM portals ORDER BY created_at DESC');
 }
 
 export async function getPortalById(id: number): Promise<Portal | null> {
-  // Example: const result = await db.query('SELECT * FROM portals WHERE id = ?', [id]);
-  return null;
+  return await queryOne<Portal>('SELECT * FROM portals WHERE id = ?', [id]);
 }
 
 export async function getPortalsByStatus(installed: boolean): Promise<Portal[]> {
-  // Example: const result = await db.query('SELECT * FROM portals WHERE installed = ?', [installed]);
-  return [];
+  return await query<Portal>('SELECT * FROM portals WHERE installed = ?', [installed]);
 }
 
 export async function createPortal(portal: Omit<Portal, 'id' | 'created_at' | 'updated_at'>): Promise<Portal> {
-  // Example: Insert portal into database
+  const result = await query(
+    'INSERT INTO portals (userId, company, software, type, userType, installed, license, installed_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+    [portal.userId, portal.company, portal.software, portal.type, portal.userType, portal.installed, portal.license, portal.installed_by]
+  );
+  
+  const insertId = result[0].insertId;
   return {
-    id: 0,
+    id: insertId,
     ...portal,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
@@ -84,13 +83,25 @@ export async function createPortal(portal: Omit<Portal, 'id' | 'created_at' | 'u
 }
 
 export async function updatePortal(id: number, portal: Partial<Portal>): Promise<Portal | null> {
-  // Example: Update portal in database
-  return null;
+  const updates = Object.entries(portal)
+    .filter(([key]) => key !== 'id' && key !== 'created_at' && key !== 'updated_at')
+    .map(([key]) => `${key} = ?`);
+  
+  if (updates.length === 0) return null;
+  
+  const values = Object.entries(portal)
+    .filter(([key]) => key !== 'id' && key !== 'created_at' && key !== 'updated_at')
+    .map(([_, value]) => value);
+  
+  const query = `UPDATE portals SET ${updates.join(', ')}, updated_at = NOW() WHERE id = ?`;
+  await query(query, [...values, id]);
+  
+  return await getPortalById(id);
 }
 
 export async function deletePortal(id: number): Promise<boolean> {
-  // Example: Delete portal from database
-  return true;
+  const result = await query('DELETE FROM portals WHERE id = ?', [id]);
+  return result[0].affectedRows > 0;
 }
 
 // ------------------------
@@ -98,19 +109,22 @@ export async function deletePortal(id: number): Promise<boolean> {
 // ------------------------
 
 export async function getSoftwarePayments(): Promise<SoftwarePayment[]> {
-  // Example: const result = await db.query('SELECT * FROM software_payments');
-  return [];
+  return await query<SoftwarePayment>('SELECT * FROM software_payments ORDER BY created_at DESC');
 }
 
 export async function getSoftwarePaymentsByStatus(status: 'paid' | 'pending' | 'overdue'): Promise<SoftwarePayment[]> {
-  // Example: const result = await db.query('SELECT * FROM software_payments WHERE status = ?', [status]);
-  return [];
+  return await query<SoftwarePayment>('SELECT * FROM software_payments WHERE status = ?', [status]);
 }
 
 export async function createSoftwarePayment(payment: Omit<SoftwarePayment, 'id' | 'created_at' | 'updated_at'>): Promise<SoftwarePayment> {
-  // Example: Insert payment into database
+  const result = await query(
+    'INSERT INTO software_payments (userId, customer, software, licenses, price, status, purchaseDate, nextBillingDate) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+    [payment.userId, payment.customer, payment.software, payment.licenses, payment.price, payment.status, payment.purchaseDate, payment.nextBillingDate]
+  );
+  
+  const insertId = result[0].insertId;
   return {
-    id: 0,
+    id: insertId,
     ...payment,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
@@ -118,13 +132,29 @@ export async function createSoftwarePayment(payment: Omit<SoftwarePayment, 'id' 
 }
 
 export async function updateSoftwarePayment(id: number, payment: Partial<SoftwarePayment>): Promise<SoftwarePayment | null> {
-  // Example: Update payment in database
-  return null;
+  const updates = Object.entries(payment)
+    .filter(([key]) => key !== 'id' && key !== 'created_at' && key !== 'updated_at')
+    .map(([key]) => `${key} = ?`);
+  
+  if (updates.length === 0) return null;
+  
+  const values = Object.entries(payment)
+    .filter(([key]) => key !== 'id' && key !== 'created_at' && key !== 'updated_at')
+    .map(([_, value]) => value);
+  
+  const query = `UPDATE software_payments SET ${updates.join(', ')}, updated_at = NOW() WHERE id = ?`;
+  await query(query, [...values, id]);
+  
+  return await getSoftwarePaymentById(id);
+}
+
+export async function getSoftwarePaymentById(id: number): Promise<SoftwarePayment | null> {
+  return await queryOne<SoftwarePayment>('SELECT * FROM software_payments WHERE id = ?', [id]);
 }
 
 export async function deleteSoftwarePayment(id: number): Promise<boolean> {
-  // Example: Delete payment from database
-  return true;
+  const result = await query('DELETE FROM software_payments WHERE id = ?', [id]);
+  return result[0].affectedRows > 0;
 }
 
 // ------------------------
@@ -132,19 +162,26 @@ export async function deleteSoftwarePayment(id: number): Promise<boolean> {
 // ------------------------
 
 export async function getBankApplications(): Promise<BankApplication[]> {
-  // Example: const result = await db.query('SELECT * FROM bank_applications');
-  return [];
+  return await query<BankApplication>('SELECT * FROM bank_applications ORDER BY created_at DESC');
 }
 
-export async function getBankApplicationsByStatus(status: 'submitted' | 'unsubmitted'): Promise<BankApplication[]> {
-  // Example: const result = await db.query('SELECT * FROM bank_applications WHERE status = ?', [status]);
-  return [];
+export async function getBankApplicationsByStatus(status: 'submitted' | 'unsubmitted' | 'processing' | 'approved' | 'rejected'): Promise<BankApplication[]> {
+  return await query<BankApplication>('SELECT * FROM bank_applications WHERE status = ?', [status]);
+}
+
+export async function getBankApplicationById(id: number): Promise<BankApplication | null> {
+  return await queryOne<BankApplication>('SELECT * FROM bank_applications WHERE id = ?', [id]);
 }
 
 export async function createBankApplication(application: Omit<BankApplication, 'id' | 'created_at' | 'updated_at'>): Promise<BankApplication> {
-  // Example: Insert application into database
+  const result = await query(
+    'INSERT INTO bank_applications (customerId, customerName, applicationType, status, submittedDate, amount, bankName, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+    [application.customerId, application.customerName, application.applicationType, application.status, application.submittedDate, application.amount, application.bankName, application.notes]
+  );
+  
+  const insertId = result[0].insertId;
   return {
-    id: 0,
+    id: insertId,
     ...application,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
@@ -152,13 +189,25 @@ export async function createBankApplication(application: Omit<BankApplication, '
 }
 
 export async function updateBankApplication(id: number, application: Partial<BankApplication>): Promise<BankApplication | null> {
-  // Example: Update application in database
-  return null;
+  const updates = Object.entries(application)
+    .filter(([key]) => key !== 'id' && key !== 'created_at' && key !== 'updated_at')
+    .map(([key]) => `${key} = ?`);
+  
+  if (updates.length === 0) return null;
+  
+  const values = Object.entries(application)
+    .filter(([key]) => key !== 'id' && key !== 'created_at' && key !== 'updated_at')
+    .map(([_, value]) => value);
+  
+  const query = `UPDATE bank_applications SET ${updates.join(', ')}, updated_at = NOW() WHERE id = ?`;
+  await query(query, [...values, id]);
+  
+  return await getBankApplicationById(id);
 }
 
 export async function deleteBankApplication(id: number): Promise<boolean> {
-  // Example: Delete application from database
-  return true;
+  const result = await query('DELETE FROM bank_applications WHERE id = ?', [id]);
+  return result[0].affectedRows > 0;
 }
 
 // ------------------------
@@ -166,14 +215,21 @@ export async function deleteBankApplication(id: number): Promise<boolean> {
 // ------------------------
 
 export async function getTimelineEvents(entityType: string, entityId: number): Promise<TimelineEvent[]> {
-  // Example: const result = await db.query('SELECT * FROM timeline_events WHERE entity_type = ? AND entity_id = ?', [entityType, entityId]);
-  return [];
+  return await query<TimelineEvent>(
+    'SELECT * FROM timeline_events WHERE entityType = ? AND entityId = ? ORDER BY date DESC',
+    [entityType, entityId]
+  );
 }
 
 export async function createTimelineEvent(event: Omit<TimelineEvent, 'id'>): Promise<TimelineEvent> {
-  // Example: Insert event into database
+  const result = await query(
+    'INSERT INTO timeline_events (entityId, entityType, eventType, description, date, createdBy) VALUES (?, ?, ?, ?, ?, ?)',
+    [event.entityId, event.entityType, event.eventType, event.description, event.date, event.createdBy]
+  );
+  
+  const insertId = result[0].insertId;
   return {
-    id: 0,
+    id: insertId,
     ...event
   };
 }
@@ -184,10 +240,51 @@ export async function createTimelineEvent(event: Omit<TimelineEvent, 'id'>): Pro
 
 export async function getCurrentUser(): Promise<User | null> {
   // This would typically use some auth token to get the current user
-  return null;
+  // For demo purposes, return the first admin user
+  return await queryOne<User>('SELECT * FROM users WHERE role = ? LIMIT 1', ['admin']);
 }
 
 export async function getUsers(): Promise<User[]> {
-  // Example: const result = await db.query('SELECT * FROM users');
-  return [];
+  return await query<User>('SELECT * FROM users ORDER BY created_at DESC');
+}
+
+export async function getUserById(id: number): Promise<User | null> {
+  return await queryOne<User>('SELECT * FROM users WHERE id = ?', [id]);
+}
+
+export async function createUser(user: Omit<User, 'id' | 'created_at' | 'updated_at'>): Promise<User> {
+  const result = await query(
+    'INSERT INTO users (name, email, role) VALUES (?, ?, ?)',
+    [user.name, user.email, user.role]
+  );
+  
+  const insertId = result[0].insertId;
+  return {
+    id: insertId,
+    ...user,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  };
+}
+
+export async function updateUser(id: number, user: Partial<User>): Promise<User | null> {
+  const updates = Object.entries(user)
+    .filter(([key]) => key !== 'id' && key !== 'created_at' && key !== 'updated_at')
+    .map(([key]) => `${key} = ?`);
+  
+  if (updates.length === 0) return null;
+  
+  const values = Object.entries(user)
+    .filter(([key]) => key !== 'id' && key !== 'created_at' && key !== 'updated_at')
+    .map(([_, value]) => value);
+  
+  const query = `UPDATE users SET ${updates.join(', ')}, updated_at = NOW() WHERE id = ?`;
+  await query(query, [...values, id]);
+  
+  return await getUserById(id);
+}
+
+export async function deleteUser(id: number): Promise<boolean> {
+  const result = await query('DELETE FROM users WHERE id = ?', [id]);
+  return result[0].affectedRows > 0;
 }

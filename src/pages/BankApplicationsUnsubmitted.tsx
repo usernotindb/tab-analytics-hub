@@ -26,9 +26,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Search, Plus, MoreHorizontal, Eye, Edit, Trash, Check, CheckCircle2 } from "lucide-react";
+import { Search, Plus, MoreHorizontal, Eye, Edit, Trash, CheckCircle2 } from "lucide-react";
 import { BankApplication } from "@/lib/schema";
-import { getBankApplicationsByStatus, createBankApplication, deleteBankApplication } from "@/lib/api";
+import { 
+  getBankApplicationsByStatus, 
+  createBankApplication, 
+  deleteBankApplication,
+  updateBankApplication 
+} from "@/lib/api";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 const ApplicationForm = ({ onComplete }: { onComplete: (data: Partial<BankApplication>) => void }) => {
   const [formData, setFormData] = useState({
@@ -132,30 +138,81 @@ const ApplicationForm = ({ onComplete }: { onComplete: (data: Partial<BankApplic
 const BankApplicationsUnsubmitted = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [applications, setApplications] = useState<BankApplication[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const data = await getBankApplicationsByStatus('unsubmitted');
-        setApplications(data);
-      } catch (error) {
-        console.error("Error fetching unsubmitted applications:", error);
-        toast({
-          title: "Error",
-          description: "Failed to load unsubmitted applications",
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Use React Query to fetch data
+  const { data: applications = [], isLoading, error } = useQuery({
+    queryKey: ['bankApplications', 'unsubmitted'],
+    queryFn: () => getBankApplicationsByStatus('unsubmitted'),
+  });
 
-    fetchData();
-  }, [toast]);
+  // Create mutation for adding applications
+  const createMutation = useMutation({
+    mutationFn: (newApplication: Omit<BankApplication, 'id' | 'created_at' | 'updated_at'>) => 
+      createBankApplication(newApplication),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bankApplications'] });
+      setIsFormOpen(false);
+      toast({
+        title: "Application created",
+        description: "The new application has been added.",
+      });
+    },
+    onError: (error) => {
+      console.error("Error creating application:", error);
+      toast({
+        title: "Error",
+        description: "Failed to create application",
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Create mutation for deleting applications
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => deleteBankApplication(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bankApplications'] });
+      toast({
+        title: "Application deleted",
+        description: "The application has been removed.",
+      });
+    },
+    onError: (error) => {
+      console.error("Error deleting application:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete application",
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Create mutation for marking as submitted
+  const submitMutation = useMutation({
+    mutationFn: (id: number) => 
+      updateBankApplication(id, { 
+        status: 'submitted', 
+        submittedDate: new Date().toISOString().split('T')[0]
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bankApplications'] });
+      toast({
+        title: "Application submitted",
+        description: "The application has been marked as submitted.",
+      });
+    },
+    onError: (error) => {
+      console.error("Error submitting application:", error);
+      toast({
+        title: "Error",
+        description: "Failed to submit application",
+        variant: "destructive",
+      });
+    }
+  });
 
   const filteredApplications = applications.filter((app) => {
     const searchTermLower = searchTerm.toLowerCase();
@@ -166,62 +223,51 @@ const BankApplicationsUnsubmitted = () => {
     );
   });
 
-  const handleDelete = async (id: number) => {
-    try {
-      await deleteBankApplication(id);
-      setApplications(applications.filter(app => app.id !== id));
-      toast({
-        title: "Application deleted",
-        description: "The application has been removed.",
-      });
-    } catch (error) {
-      console.error("Error deleting application:", error);
-      toast({
-        title: "Error",
-        description: "Failed to delete application",
-        variant: "destructive",
-      });
-    }
+  const handleDelete = (id: number) => {
+    deleteMutation.mutate(id);
   };
 
-  const handleAddApplication = async (data: Partial<BankApplication>) => {
-    try {
-      const newApplication = await createBankApplication({
-        customerId: 0, // This would be set properly in a real implementation
-        customerName: data.customerName || "",
-        applicationType: data.applicationType || "Personal Loan",
-        status: 'unsubmitted',
-        amount: data.amount || 0,
-        bankName: data.bankName || "",
-        notes: data.notes,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      });
-      
-      setApplications([...applications, newApplication]);
-      setIsFormOpen(false);
-      toast({
-        title: "Application created",
-        description: "The new application has been added.",
-      });
-    } catch (error) {
-      console.error("Error creating application:", error);
-      toast({
-        title: "Error",
-        description: "Failed to create application",
-        variant: "destructive",
-      });
-    }
+  const handleAddApplication = (data: Partial<BankApplication>) => {
+    createMutation.mutate({
+      customerId: 0, // This would be set properly in a real implementation
+      customerName: data.customerName || "",
+      applicationType: data.applicationType || "Personal Loan",
+      status: 'unsubmitted',
+      amount: data.amount || 0,
+      bankName: data.bankName || "",
+      notes: data.notes,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    });
+  };
+
+  const handleMarkAsSubmitted = (id: number) => {
+    submitMutation.mutate(id);
   };
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
   };
 
-  if (loading) {
+  const viewDetails = (id: number) => {
+    navigate(`/bank-applications/${id}`);
+  };
+
+  if (isLoading) {
     return (
       <div className="flex justify-center items-center h-full">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex justify-center items-center h-full">
+        <div className="text-red-500">
+          <p>Error loading applications</p>
+          <p>{error instanceof Error ? error.message : "Unknown error"}</p>
+        </div>
       </div>
     );
   }
@@ -308,7 +354,7 @@ const BankApplicationsUnsubmitted = () => {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => viewDetails(app.id)}>
                               <Eye className="mr-2 h-4 w-4" />
                               View details
                             </DropdownMenuItem>
@@ -316,7 +362,7 @@ const BankApplicationsUnsubmitted = () => {
                               <Edit className="mr-2 h-4 w-4" />
                               Edit application
                             </DropdownMenuItem>
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleMarkAsSubmitted(app.id)}>
                               <CheckCircle2 className="mr-2 h-4 w-4" />
                               Mark as submitted
                             </DropdownMenuItem>

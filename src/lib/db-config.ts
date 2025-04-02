@@ -1,5 +1,9 @@
 
 // MySQL/MariaDB database configuration
+import dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
 
 interface DbConfig {
   host: string;
@@ -10,7 +14,7 @@ interface DbConfig {
   connectionLimit: number;
 }
 
-// This would normally be loaded from environment variables
+// This should be loaded from environment variables in production
 export const dbConfig: DbConfig = {
   host: process.env.DB_HOST || 'localhost',
   port: parseInt(process.env.DB_PORT || '3306', 10),

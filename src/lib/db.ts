@@ -1,12 +1,7 @@
 
-// This file would be used in a Node.js backend environment to connect to MySQL/MariaDB
-// For a frontend-only app, this would be part of your backend API service
-
-import { dbConfig } from './db-config';
-
-/*
-// Example implementation with mysql2 package:
+// Database connection and query utilities
 import mysql from 'mysql2/promise';
+import { dbConfig } from './db-config';
 
 // Create a connection pool
 const pool = mysql.createPool({
@@ -21,20 +16,21 @@ const pool = mysql.createPool({
 });
 
 // Wrapper for database queries
-export async function query(sql: string, params: any[] = []) {
+export async function query<T = any>(sql: string, params: any[] = []): Promise<T[]> {
   try {
     const [rows] = await pool.execute(sql, params);
-    return rows;
+    return rows as T[];
   } catch (error) {
     console.error('Database error:', error);
     throw error;
   }
 }
-*/
 
-// Since this is a frontend app, you would need to create a backend API service
-// to handle database operations. The api.ts file contains functions that would
-// call this backend API service.
+// Helper function to get a single row
+export async function queryOne<T = any>(sql: string, params: any[] = []): Promise<T | null> {
+  const rows = await query<T>(sql, params);
+  return rows.length > 0 ? rows[0] : null;
+}
 
 export const DB_INFO = {
   type: 'MySQL/MariaDB',
@@ -49,8 +45,16 @@ export const DB_INFO = {
   ]
 };
 
-// Export a function to check database connection - this would be implemented in the backend
+// Function to check database connection
 export async function checkConnection() {
-  // In a real implementation, this would try to connect to the database and return connection status
-  return { connected: false, message: 'Not implemented in frontend' };
+  try {
+    await pool.query('SELECT 1');
+    return { connected: true, message: 'Successfully connected to database' };
+  } catch (error) {
+    console.error('Database connection error:', error);
+    return { 
+      connected: false, 
+      message: error instanceof Error ? error.message : 'Failed to connect to database' 
+    };
+  }
 }
