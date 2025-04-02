@@ -1,60 +1,23 @@
 
-// Database connection and query utilities
-import mysql from 'mysql2/promise';
-import { dbConfig } from './db-config';
+// This is a mock database module for frontend development
+// In a real application, you would have a backend API instead
 
-// Create a connection pool
-const pool = mysql.createPool({
-  host: dbConfig.host,
-  port: dbConfig.port,
-  user: dbConfig.user,
-  password: dbConfig.password,
-  database: dbConfig.database,
-  waitForConnections: true,
-  connectionLimit: dbConfig.connectionLimit,
-  queueLimit: 0
-});
+import { DB_INFO } from './db-config';
+console.log("Using mock database:", DB_INFO.message);
 
-// Wrapper for database queries
-export async function query<T = any>(sql: string, params: any[] = []): Promise<T[]> {
-  try {
-    const [rows] = await pool.execute(sql, params);
-    return rows as T[];
-  } catch (error) {
-    console.error('Database error:', error);
-    throw error;
-  }
+// Mock query function that returns sample data
+export async function query<T = any>(_sql: string, _params: any[] = []): Promise<T[]> {
+  return Promise.resolve([]) as Promise<T[]>;
 }
 
-// Helper function to get a single row
-export async function queryOne<T = any>(sql: string, params: any[] = []): Promise<T | null> {
-  const rows = await query<T>(sql, params);
-  return rows.length > 0 ? rows[0] : null;
+// Mock queryOne function
+export async function queryOne<T = any>(_sql: string, _params: any[] = []): Promise<T | null> {
+  return Promise.resolve(null) as Promise<T | null>;
 }
 
-export const DB_INFO = {
-  type: 'MySQL/MariaDB',
-  version: '10.5+',
-  tables: [
-    'users',
-    'customers',
-    'portals',
-    'software_payments',
-    'bank_applications',
-    'timeline_events'
-  ]
+export const checkConnection = () => {
+  return Promise.resolve({ 
+    connected: true, 
+    message: 'Using mock database connection for frontend development' 
+  });
 };
-
-// Function to check database connection
-export async function checkConnection() {
-  try {
-    await pool.query('SELECT 1');
-    return { connected: true, message: 'Successfully connected to database' };
-  } catch (error) {
-    console.error('Database connection error:', error);
-    return { 
-      connected: false, 
-      message: error instanceof Error ? error.message : 'Failed to connect to database' 
-    };
-  }
-}
