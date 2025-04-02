@@ -1,4 +1,3 @@
-
 import { Customer, Portal, SoftwarePayment, BankApplication, TimelineEvent, User } from './schema';
 
 // ------------------------
@@ -204,7 +203,7 @@ const timelineEventsData: TimelineEvent[] = [
   {
     id: 2,
     entityId: 1,
-    entityType: "bank_application",
+    entityType: "application",
     eventType: "submitted",
     description: "Loan application submitted to First National Bank",
     date: new Date(2023, 0, 20).toISOString(),
@@ -235,7 +234,7 @@ const usersData: User[] = [
     id: 2,
     name: "Staff User",
     email: "staff@example.com",
-    role: "staff",
+    role: "user",
     created_at: new Date(2023, 0, 10).toISOString(),
     updated_at: new Date(2023, 0, 10).toISOString()
   }
@@ -249,7 +248,7 @@ const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 // ------------------------
 
 export async function getCustomers(): Promise<Customer[]> {
-  await delay(500); // Simulate network delay
+  await delay(500);
   return [...customersData];
 }
 
