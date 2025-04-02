@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -142,13 +141,11 @@ const BankApplicationsUnsubmitted = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const queryClient = useQueryClient();
 
-  // Use React Query to fetch data
   const { data: applications = [], isLoading, error } = useQuery({
     queryKey: ['bankApplications', 'unsubmitted'],
     queryFn: () => getBankApplicationsByStatus('unsubmitted'),
   });
 
-  // Create mutation for adding applications
   const createMutation = useMutation({
     mutationFn: (newApplication: Omit<BankApplication, 'id' | 'created_at' | 'updated_at'>) => 
       createBankApplication(newApplication),
@@ -170,7 +167,6 @@ const BankApplicationsUnsubmitted = () => {
     }
   });
 
-  // Create mutation for deleting applications
   const deleteMutation = useMutation({
     mutationFn: (id: number) => deleteBankApplication(id),
     onSuccess: () => {
@@ -190,7 +186,6 @@ const BankApplicationsUnsubmitted = () => {
     }
   });
 
-  // Create mutation for marking as submitted
   const submitMutation = useMutation({
     mutationFn: (id: number) => 
       updateBankApplication(id, { 
@@ -229,15 +224,13 @@ const BankApplicationsUnsubmitted = () => {
 
   const handleAddApplication = (data: Partial<BankApplication>) => {
     createMutation.mutate({
-      customerId: 0, // This would be set properly in a real implementation
+      customerId: 0,
       customerName: data.customerName || "",
       applicationType: data.applicationType || "Personal Loan",
       status: 'unsubmitted',
       amount: data.amount || 0,
       bankName: data.bankName || "",
-      notes: data.notes,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      notes: data.notes
     });
   };
 

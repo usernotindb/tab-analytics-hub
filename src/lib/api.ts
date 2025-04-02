@@ -40,8 +40,8 @@ export async function updateCustomer(id: number, customer: Partial<Customer>): P
     .filter(([key]) => key !== 'id' && key !== 'created_at' && key !== 'updated_at')
     .map(([_, value]) => value);
   
-  const query = `UPDATE customers SET ${updates.join(', ')}, updated_at = NOW() WHERE id = ?`;
-  await query(query, [...values, id]);
+  const sqlQuery = `UPDATE customers SET ${updates.join(', ')}, updated_at = NOW() WHERE id = ?`;
+  await query(sqlQuery, [...values, id]);
   
   return await getCustomerById(id);
 }
@@ -93,8 +93,8 @@ export async function updatePortal(id: number, portal: Partial<Portal>): Promise
     .filter(([key]) => key !== 'id' && key !== 'created_at' && key !== 'updated_at')
     .map(([_, value]) => value);
   
-  const query = `UPDATE portals SET ${updates.join(', ')}, updated_at = NOW() WHERE id = ?`;
-  await query(query, [...values, id]);
+  const sqlQuery = `UPDATE portals SET ${updates.join(', ')}, updated_at = NOW() WHERE id = ?`;
+  await query(sqlQuery, [...values, id]);
   
   return await getPortalById(id);
 }
@@ -142,8 +142,8 @@ export async function updateSoftwarePayment(id: number, payment: Partial<Softwar
     .filter(([key]) => key !== 'id' && key !== 'created_at' && key !== 'updated_at')
     .map(([_, value]) => value);
   
-  const query = `UPDATE software_payments SET ${updates.join(', ')}, updated_at = NOW() WHERE id = ?`;
-  await query(query, [...values, id]);
+  const sqlQuery = `UPDATE software_payments SET ${updates.join(', ')}, updated_at = NOW() WHERE id = ?`;
+  await query(sqlQuery, [...values, id]);
   
   return await getSoftwarePaymentById(id);
 }
@@ -199,8 +199,8 @@ export async function updateBankApplication(id: number, application: Partial<Ban
     .filter(([key]) => key !== 'id' && key !== 'created_at' && key !== 'updated_at')
     .map(([_, value]) => value);
   
-  const query = `UPDATE bank_applications SET ${updates.join(', ')}, updated_at = NOW() WHERE id = ?`;
-  await query(query, [...values, id]);
+  const sqlQuery = `UPDATE bank_applications SET ${updates.join(', ')}, updated_at = NOW() WHERE id = ?`;
+  await query(sqlQuery, [...values, id]);
   
   return await getBankApplicationById(id);
 }
@@ -278,8 +278,8 @@ export async function updateUser(id: number, user: Partial<User>): Promise<User 
     .filter(([key]) => key !== 'id' && key !== 'created_at' && key !== 'updated_at')
     .map(([_, value]) => value);
   
-  const query = `UPDATE users SET ${updates.join(', ')}, updated_at = NOW() WHERE id = ?`;
-  await query(query, [...values, id]);
+  const sqlQuery = `UPDATE users SET ${updates.join(', ')}, updated_at = NOW() WHERE id = ?`;
+  await query(sqlQuery, [...values, id]);
   
   return await getUserById(id);
 }
