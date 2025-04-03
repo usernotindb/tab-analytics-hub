@@ -27,86 +27,74 @@ import {
   Clock,
   Calendar
 } from "lucide-react";
-
-// Portal interface
-interface Portal {
-  id: number;
-  userId: string;
-  company: string;
-  software: string;
-  type: string;
-  userType: string;
-  installed: boolean;
-  license: string;
-  installed_by: string;
-}
-
-// Sample data - in a real app, this would come from your API
-const portalData: Portal[] = [
-  {
-    id: 1,
-    userId: "14545807",
-    company: "Azteca Tax Systems",
-    software: "Xlink",
-    type: "Desktop",
-    userType: "Master User",
-    installed: true,
-    license: "1040 License",
-    installed_by: "John Doe",
-  },
-  {
-    id: 2,
-    userId: "14545808",
-    company: "Global Tax Solutions",
-    software: "TaxWeb",
-    type: "Online",
-    userType: "Admin",
-    installed: true,
-    license: "Full Service",
-    installed_by: "Jane Smith",
-  },
-  {
-    id: 3,
-    userId: "14545809",
-    company: "Premier Tax Services",
-    software: "TaxPro",
-    type: "Desktop",
-    userType: "Standard User",
-    installed: false,
-    license: "1040 License",
-    installed_by: "N/A",
-  },
-];
+import { getPortalById, deletePortal, getTimelineEvents } from "@/lib/api-service";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Portal, TimelineEvent } from "@/lib/schema";
 
 const PortalDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [portal, setPortal] = useState<Portal | null>(null);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  
+  const portalId = Number(id);
 
-  useEffect(() => {
-    // In a real app, this would be an API call
-    const foundPortal = portalData.find(
-      (p) => p.id === Number(id)
-    );
-    
-    if (foundPortal) {
-      setPortal(foundPortal);
+  const { 
+    data: portal, 
+    isLoading: portalLoading, 
+    error: portalError 
+  } = useQuery({
+    queryKey: ['portal', portalId],
+    queryFn: () => getPortalById(portalId),
+    enabled: !!portalId && !isNaN(portalId)
+  });
+
+  const { 
+    data: timelineEvents = [], 
+    isLoading: timelineLoading 
+  } = useQuery({
+    queryKey: ['timeline', 'portal', portalId],
+    queryFn: () => getTimelineEvents('portal', portalId),
+    enabled: !!portalId && !isNaN(portalId)
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => deletePortal(id),
+    onSuccess: () => {
+      toast({
+        title: "Installation deleted",
+        description: "The installation has been successfully removed.",
+      });
+      navigate("/portals");
+      queryClient.invalidateQueries({ queryKey: ['portals'] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to delete the installation. Please try again.",
+        variant: "destructive",
+      });
+      console.error("Delete error:", error);
     }
-    setLoading(false);
-  }, [id]);
+  });
 
   const handleDelete = () => {
-    // In a real app, this would be an API call
-    toast({
-      title: "Installation deleted",
-      description: "The installation has been successfully removed.",
-    });
-    navigate("/portals");
+    if (portalId) {
+      deleteMutation.mutate(portalId);
+    }
   };
 
-  if (loading) {
+  useEffect(() => {
+    if (portalError) {
+      toast({
+        title: "Error",
+        description: "Failed to load portal details. Please try again later.",
+        variant: "destructive",
+      });
+    }
+  }, [portalError, toast]);
+
+  if (portalLoading) {
     return (
       <div className="flex justify-center items-center h-full">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
@@ -149,9 +137,23 @@ const PortalDetails = () => {
             <Edit className="h-4 w-4" />
             <span>Edit</span>
           </Button>
-          <Button variant="destructive" className="space-x-2" onClick={handleDelete}>
-            <Trash className="h-4 w-4" />
-            <span>Delete</span>
+          <Button 
+            variant="destructive" 
+            className="space-x-2" 
+            onClick={handleDelete}
+            disabled={deleteMutation.isPending}
+          >
+            {deleteMutation.isPending ? (
+              <>
+                <div className="animate-spin h-4 w-4 border-2 border-white rounded-full border-t-transparent"></div>
+                <span>Deleting...</span>
+              </>
+            ) : (
+              <>
+                <Trash className="h-4 w-4" />
+                <span>Delete</span>
+              </>
+            )}
           </Button>
         </div>
       </div>
@@ -213,7 +215,7 @@ const PortalDetails = () => {
                   </div>
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Installed By</p>
-                    <p>{portal.installed_by}</p>
+                    <p>{portal.installed_by || "N/A"}</p>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Installation Status</p>
@@ -243,40 +245,38 @@ const PortalDetails = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-start gap-4">
-                    <div className="min-w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-                      <CheckCircle className="h-4 w-4 text-primary" />
-                    </div>
-                    <div>
-                      <p className="font-medium">Installation Created</p>
-                      <p className="text-sm text-muted-foreground">Jan 15, 2023 at 10:30 AM</p>
-                      <p className="text-sm mt-1">Initial setup of the installation was completed.</p>
-                    </div>
+                {timelineLoading ? (
+                  <div className="flex justify-center items-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                   </div>
-                  
-                  <div className="flex items-start gap-4">
-                    <div className="min-w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-                      <UserCheck className="h-4 w-4 text-primary" />
-                    </div>
-                    <div>
-                      <p className="font-medium">User Access Configured</p>
-                      <p className="text-sm text-muted-foreground">Jan 16, 2023 at 2:15 PM</p>
-                      <p className="text-sm mt-1">User permissions and access controls were set up.</p>
-                    </div>
+                ) : timelineEvents.length === 0 ? (
+                  <div className="flex items-center justify-center h-32">
+                    <p className="text-muted-foreground">No timeline events found.</p>
                   </div>
-                  
-                  <div className="flex items-start gap-4">
-                    <div className="min-w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-                      <Clock className="h-4 w-4 text-primary" />
-                    </div>
-                    <div>
-                      <p className="font-medium">Last Updated</p>
-                      <p className="text-sm text-muted-foreground">Feb 3, 2023 at 9:45 AM</p>
-                      <p className="text-sm mt-1">Software was updated to the latest version.</p>
-                    </div>
+                ) : (
+                  <div className="space-y-4">
+                    {timelineEvents.map((event) => (
+                      <div key={event.id} className="flex items-start gap-4">
+                        <div className="min-w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+                          {event.eventType === 'creation' ? (
+                            <CheckCircle className="h-4 w-4 text-primary" />
+                          ) : event.eventType === 'update' ? (
+                            <Clock className="h-4 w-4 text-primary" />
+                          ) : (
+                            <UserCheck className="h-4 w-4 text-primary" />
+                          )}
+                        </div>
+                        <div>
+                          <p className="font-medium">{event.eventType.charAt(0).toUpperCase() + event.eventType.slice(1)}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {new Date(event.date).toLocaleDateString()} at {new Date(event.date).toLocaleTimeString()}
+                          </p>
+                          <p className="text-sm mt-1">{event.description}</p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                </div>
+                )}
               </CardContent>
             </Card>
           </div>

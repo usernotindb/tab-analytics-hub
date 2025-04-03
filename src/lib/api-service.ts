@@ -1,9 +1,8 @@
-
 import { Customer, Portal, SoftwarePayment, BankApplication, TimelineEvent, User } from './schema';
 
 // Base URL for your backend API
 const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://your-production-api.com/api' 
+  ? 'https://ats.aztecas.com/api' 
   : 'http://localhost:3001/api';
 
 // Helper for making API requests

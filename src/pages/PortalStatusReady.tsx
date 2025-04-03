@@ -1,6 +1,7 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,50 +20,28 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Search, MoreHorizontal, Eye, Edit, Trash, CheckCircle } from "lucide-react";
-
-interface Portal {
-  id: number;
-  userId: string;
-  company: string;
-  software: string;
-  installationDate: string;
-  installedBy: string;
-  lastUpdated: string;
-}
-
-// Sample data of ready portals
-const readyPortals: Portal[] = [
-  {
-    id: 1,
-    userId: "14545807",
-    company: "Azteca Tax Systems",
-    software: "Xlink",
-    installationDate: "2023-01-15",
-    installedBy: "John Doe",
-    lastUpdated: "2023-02-10",
-  },
-  {
-    id: 2,
-    userId: "14545808",
-    company: "Global Tax Solutions",
-    software: "TaxWeb",
-    installationDate: "2023-03-05",
-    installedBy: "Jane Smith",
-    lastUpdated: "2023-03-20",
-  },
-  {
-    id: 4,
-    userId: "14545812",
-    company: "Elite Tax Advisors",
-    software: "TaxPro Premium",
-    installationDate: "2023-02-18",
-    installedBy: "Michael Johnson",
-    lastUpdated: "2023-04-01",
-  },
-];
+import { getPortalsByStatus } from "@/lib/api-service";
+import { Portal } from "@/lib/schema";
+import { useQuery } from "@tanstack/react-query";
 
 const PortalStatusReady = () => {
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
+  
+  const { data: readyPortals = [], isLoading, error } = useQuery({
+    queryKey: ['portals', 'installed', true],
+    queryFn: () => getPortalsByStatus(true),
+  });
+
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load ready portals. Please try again later.",
+        variant: "destructive",
+      });
+    }
+  }, [error, toast]);
 
   const filteredPortals = readyPortals.filter((portal) => {
     const searchTermLower = searchTerm.toLowerCase();
@@ -70,7 +49,7 @@ const PortalStatusReady = () => {
       portal.userId.toLowerCase().includes(searchTermLower) ||
       portal.company.toLowerCase().includes(searchTermLower) ||
       portal.software.toLowerCase().includes(searchTermLower) ||
-      portal.installedBy.toLowerCase().includes(searchTermLower)
+      (portal.installed_by && portal.installed_by.toLowerCase().includes(searchTermLower))
     );
   });
 
@@ -86,7 +65,9 @@ const PortalStatusReady = () => {
         
         <div className="flex items-center gap-2">
           <CheckCircle className="h-5 w-5 text-green-500" />
-          <span className="text-green-500 font-medium">{readyPortals.length} Ready</span>
+          <span className="text-green-500 font-medium">
+            {isLoading ? "Loading..." : `${readyPortals.length} Ready`}
+          </span>
         </div>
       </div>
 
@@ -119,7 +100,15 @@ const PortalStatusReady = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredPortals.length === 0 ? (
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="h-24 text-center">
+                      <div className="flex justify-center items-center">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : filteredPortals.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7} className="h-24 text-center">
                       No ready portals found.
@@ -131,9 +120,13 @@ const PortalStatusReady = () => {
                       <TableCell className="font-medium">{portal.userId}</TableCell>
                       <TableCell>{portal.company}</TableCell>
                       <TableCell>{portal.software}</TableCell>
-                      <TableCell className="hidden md:table-cell">{portal.installationDate}</TableCell>
-                      <TableCell className="hidden lg:table-cell">{portal.installedBy}</TableCell>
-                      <TableCell className="hidden lg:table-cell">{portal.lastUpdated}</TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        {new Date(portal.created_at).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell">{portal.installed_by}</TableCell>
+                      <TableCell className="hidden lg:table-cell">
+                        {new Date(portal.updated_at).toLocaleDateString()}
+                      </TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>

@@ -25,58 +25,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Search, Plus, MoreHorizontal, Eye, Edit, Trash, DollarSign } from "lucide-react";
-
-interface Software {
-  id: number;
-  userId: string;
-  customer: string;
-  software: string;
-  licenses: number;
-  price: number;
-  status: 'paid' | 'pending' | 'overdue';
-  purchaseDate: string;
-  nextBillingDate: string;
-}
-
-const sampleSoftware: Software[] = [
-  {
-    id: 1,
-    userId: "14545807",
-    customer: "Azteca Tax Systems",
-    software: "TaxPro Premium",
-    licenses: 3,
-    price: 599.99,
-    status: 'paid',
-    purchaseDate: "2023-01-15",
-    nextBillingDate: "2024-01-15",
-  },
-  {
-    id: 2,
-    userId: "14545808",
-    customer: "Global Tax Solutions",
-    software: "TaxWeb Enterprise",
-    licenses: 5,
-    price: 1299.99,
-    status: 'pending',
-    purchaseDate: "2023-03-10",
-    nextBillingDate: "2024-03-10",
-  },
-  {
-    id: 3,
-    userId: "14545809",
-    customer: "Premier Tax Services",
-    software: "TaxPro Basic",
-    licenses: 2,
-    price: 299.99,
-    status: 'overdue',
-    purchaseDate: "2023-02-20",
-    nextBillingDate: "2024-02-20",
-  },
-];
+import { Search, Plus, MoreHorizontal, Eye, Edit, Trash, DollarSign, Loader2 } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { getSoftwarePayments, createSoftwarePayment, deleteSoftwarePayment, getSoftwarePaymentsByStatus } from "@/lib/api-service";
+import { SoftwarePayment } from "@/lib/schema";
 
 // Payment form component
-const PaymentForm = ({ onComplete }: { onComplete: (data: Partial<Software>) => void }) => {
+const PaymentForm = ({ onComplete, isPending }: { 
+  onComplete: (data: Partial<SoftwarePayment>) => void,
+  isPending: boolean 
+}) => {
   const [formData, setFormData] = useState({
     userId: "",
     customer: "",
@@ -109,6 +67,7 @@ const PaymentForm = ({ onComplete }: { onComplete: (data: Partial<Software>) => 
           onChange={handleChange} 
           placeholder="Enter User ID" 
           required
+          disabled={isPending}
         />
       </div>
       
@@ -121,6 +80,7 @@ const PaymentForm = ({ onComplete }: { onComplete: (data: Partial<Software>) => 
           onChange={handleChange} 
           placeholder="Enter Customer Name" 
           required
+          disabled={isPending}
         />
       </div>
 
@@ -133,6 +93,7 @@ const PaymentForm = ({ onComplete }: { onComplete: (data: Partial<Software>) => 
           onChange={handleChange} 
           placeholder="Enter Software Name" 
           required
+          disabled={isPending}
         />
       </div>
 
@@ -146,6 +107,7 @@ const PaymentForm = ({ onComplete }: { onComplete: (data: Partial<Software>) => 
           value={formData.licenses} 
           onChange={handleChange} 
           required
+          disabled={isPending}
         />
       </div>
 
@@ -160,11 +122,21 @@ const PaymentForm = ({ onComplete }: { onComplete: (data: Partial<Software>) => 
           value={formData.price} 
           onChange={handleChange} 
           required
+          disabled={isPending}
         />
       </div>
 
       <div className="flex justify-end">
-        <Button type="submit">Add Payment</Button>
+        <Button type="submit" disabled={isPending}>
+          {isPending ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Adding...
+            </>
+          ) : (
+            "Add Payment"
+          )}
+        </Button>
       </div>
     </form>
   );
@@ -172,9 +144,72 @@ const PaymentForm = ({ onComplete }: { onComplete: (data: Partial<Software>) => 
 
 const PaidSoftware = () => {
   const { toast } = useToast();
-  const [software, setSoftware] = useState<Software[]>(sampleSoftware);
   const [searchTerm, setSearchTerm] = useState("");
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const queryClient = useQueryClient();
+
+  const { data: software = [], isLoading } = useQuery({
+    queryKey: ['software-payments'],
+    queryFn: getSoftwarePayments
+  });
+
+  const { data: paidSoftware = [] } = useQuery({
+    queryKey: ['software-payments', 'status', 'paid'],
+    queryFn: () => getSoftwarePaymentsByStatus('paid')
+  });
+
+  const { data: pendingSoftware = [] } = useQuery({
+    queryKey: ['software-payments', 'status', 'pending'],
+    queryFn: () => getSoftwarePaymentsByStatus('pending')
+  });
+
+  const { data: overdueSoftware = [] } = useQuery({
+    queryKey: ['software-payments', 'status', 'overdue'],
+    queryFn: () => getSoftwarePaymentsByStatus('overdue')
+  });
+
+  const createMutation = useMutation({
+    mutationFn: (newPayment: Omit<SoftwarePayment, 'id' | 'created_at' | 'updated_at'>) => {
+      return createSoftwarePayment(newPayment);
+    },
+    onSuccess: () => {
+      setIsFormOpen(false);
+      toast({
+        title: "Payment added",
+        description: "The new software payment has been successfully recorded.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['software-payments'] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to add the payment. Please try again.",
+        variant: "destructive"
+      });
+      console.error("Create error:", error);
+    }
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => {
+      return deleteSoftwarePayment(id);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Software payment deleted",
+        description: "The payment record has been successfully removed.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['software-payments'] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to delete the payment. Please try again.",
+        variant: "destructive"
+      });
+      console.error("Delete error:", error);
+    }
+  });
 
   const filteredSoftware = software.filter((item) => {
     const searchTermLower = searchTerm.toLowerCase();
@@ -186,20 +221,15 @@ const PaidSoftware = () => {
   });
 
   const handleDelete = (id: number) => {
-    setSoftware(software.filter(item => item.id !== id));
-    toast({
-      title: "Software payment deleted",
-      description: "The payment record has been successfully removed.",
-    });
+    deleteMutation.mutate(id);
   };
 
-  const handleAddPayment = (data: Partial<Software>) => {
+  const handleAddPayment = (data: Partial<SoftwarePayment>) => {
     const today = new Date();
     const nextYear = new Date();
     nextYear.setFullYear(today.getFullYear() + 1);
     
-    const newSoftware: Software = {
-      id: software.length + 1,
+    const newSoftware: Omit<SoftwarePayment, 'id' | 'created_at' | 'updated_at'> = {
       userId: data.userId || "",
       customer: data.customer || "",
       software: data.software || "",
@@ -210,12 +240,7 @@ const PaidSoftware = () => {
       nextBillingDate: nextYear.toISOString().split('T')[0],
     };
     
-    setSoftware([...software, newSoftware]);
-    setIsFormOpen(false);
-    toast({
-      title: "Payment added",
-      description: "The new software payment has been successfully recorded.",
-    });
+    createMutation.mutate(newSoftware);
   };
 
   const getStatusColor = (status: string) => {
@@ -229,6 +254,10 @@ const PaidSoftware = () => {
       default:
         return 'bg-gray-500';
     }
+  };
+
+  const calculateTotalAmount = (payments: SoftwarePayment[]) => {
+    return payments.reduce((sum, item) => sum + item.price, 0).toFixed(2);
   };
 
   return (
@@ -248,7 +277,10 @@ const PaidSoftware = () => {
               <DialogTitle>Add New Software Payment</DialogTitle>
             </DialogHeader>
             <div className="py-4">
-              <PaymentForm onComplete={handleAddPayment} />
+              <PaymentForm 
+                onComplete={handleAddPayment} 
+                isPending={createMutation.isPending} 
+              />
             </div>
           </DialogContent>
         </Dialog>
@@ -262,10 +294,10 @@ const PaidSoftware = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              ${software.filter(s => s.status === 'paid').reduce((sum, item) => sum + item.price, 0).toFixed(2)}
+              ${calculateTotalAmount(paidSoftware)}
             </div>
             <p className="text-xs text-muted-foreground">
-              {software.filter(s => s.status === 'paid').length} software packages
+              {paidSoftware.length} software packages
             </p>
           </CardContent>
         </Card>
@@ -276,10 +308,10 @@ const PaidSoftware = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              ${software.filter(s => s.status === 'pending').reduce((sum, item) => sum + item.price, 0).toFixed(2)}
+              ${calculateTotalAmount(pendingSoftware)}
             </div>
             <p className="text-xs text-muted-foreground">
-              {software.filter(s => s.status === 'pending').length} software packages
+              {pendingSoftware.length} software packages
             </p>
           </CardContent>
         </Card>
@@ -290,10 +322,10 @@ const PaidSoftware = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              ${software.filter(s => s.status === 'overdue').reduce((sum, item) => sum + item.price, 0).toFixed(2)}
+              ${calculateTotalAmount(overdueSoftware)}
             </div>
             <p className="text-xs text-muted-foreground">
-              {software.filter(s => s.status === 'overdue').length} software packages
+              {overdueSoftware.length} software packages
             </p>
           </CardContent>
         </Card>
@@ -329,7 +361,15 @@ const PaidSoftware = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredSoftware.length === 0 ? (
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="h-24 text-center">
+                      <div className="flex justify-center items-center">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : filteredSoftware.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={8} className="h-24 text-center">
                       No software payments found.
@@ -370,6 +410,7 @@ const PaidSoftware = () => {
                             <DropdownMenuItem 
                               className="text-destructive focus:text-destructive"
                               onClick={() => handleDelete(item.id)}
+                              disabled={deleteMutation.isPending}
                             >
                               <Trash className="mr-2 h-4 w-4" />
                               Delete
