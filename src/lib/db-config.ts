@@ -4,16 +4,15 @@
 
 // Export a message to clarify usage
 export const DB_INFO = {
-  message: "This is a frontend-only application using mock data. In a real application, you would connect to a backend API."
+  message: "This is a frontend-only application using mock data. In a real application, you would connect to a backend API to access your MySQL database."
 };
 
-// These values would typically come from environment variables in a backend
-// They're kept here for reference but aren't used in the frontend
+// Database configuration (these would be used by a backend server)
 export const dbConfig = {
-  host: 'localhost',
+  host: '127.0.0.1',
   port: 3306,
-  user: 'user',
-  password: 'password',
-  database: 'tax_portal',
+  user: 'atsat',
+  password: 'P@SS@word@2014',
+  database: 'atsat',
   connectionLimit: 10,
 };
