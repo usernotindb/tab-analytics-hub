@@ -1,13 +1,10 @@
 
-// This is a configuration file that would be used in a real backend
-// For the frontend, we'll use mock data instead
-
-// Export a message to clarify usage
+// Database configuration for MySQL connection
 export const DB_INFO = {
-  message: "This is a frontend-only application using mock data. In a real application, you would connect to a backend API to access your MySQL database."
+  message: "Using MySQL database connection"
 };
 
-// Database configuration (these would be used by a backend server)
+// Database configuration for MySQL
 export const dbConfig = {
   host: '127.0.0.1',
   port: 3306,
