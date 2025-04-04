@@ -5,7 +5,7 @@
  */
 
 // Default API URL
-const DEFAULT_API_URL = "http://localhost:3001/api";
+const DEFAULT_API_URL = "http://localhost:8236/api";
 
 // Configuration object
 class ConfigService {

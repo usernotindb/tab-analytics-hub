@@ -21,6 +21,9 @@ import BankApplicationsUnsubmitted from "./pages/BankApplicationsUnsubmitted";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import { AuthProvider } from "./contexts/AuthContext";
+import UserManagement from "./pages/UserManagement";
+import SystemHealth from "./pages/SystemHealth";
+import Reports from "./pages/Reports";
 
 const queryClient = new QueryClient();
 
@@ -41,6 +44,9 @@ const AppRoutes = () => (
       <Route path="/" element={<Index />} />
       <Route path="/login" element={<Login />} />
       <Route path="/setup" element={<SetupWizard />} />
+      
+      {/* Redirect from portal-status to the appropriate page */}
+      <Route path="/portal-status" element={<Navigate to="/portal-status/ready" replace />} />
       
       <Route 
         path="/dashboard" 
@@ -148,6 +154,37 @@ const AppRoutes = () => (
           <PrivateRoute>
             <MainLayout>
               <Settings />
+            </MainLayout>
+          </PrivateRoute>
+        } 
+      />
+      {/* New pages */}
+      <Route 
+        path="/users" 
+        element={
+          <PrivateRoute>
+            <MainLayout>
+              <UserManagement />
+            </MainLayout>
+          </PrivateRoute>
+        } 
+      />
+      <Route 
+        path="/system-health" 
+        element={
+          <PrivateRoute>
+            <MainLayout>
+              <SystemHealth />
+            </MainLayout>
+          </PrivateRoute>
+        } 
+      />
+      <Route 
+        path="/reports" 
+        element={
+          <PrivateRoute>
+            <MainLayout>
+              <Reports />
             </MainLayout>
           </PrivateRoute>
         } 

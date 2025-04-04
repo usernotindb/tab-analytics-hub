@@ -3,7 +3,7 @@ import { Customer, Portal, SoftwarePayment, BankApplication, TimelineEvent, User
 // Base URL for your backend API
 const API_BASE_URL = process.env.NODE_ENV === 'production' 
   ? 'https://ats.aztecas.com/api' 
-  : 'http://localhost:3001/api';
+  : 'http://localhost:8236/api';
 
 // Helper for making API requests
 const fetchWithAuth = async (endpoint: string, options: RequestInit = {}) => {
