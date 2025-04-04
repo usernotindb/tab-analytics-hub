@@ -11,7 +11,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   BarChart3,
   Users,
@@ -23,22 +23,36 @@ import {
   Database,
   CheckCircle,
   XCircle,
-  Building2, // Changed from BankIcon to Building2
+  Building2,
   LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 export function AppSidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
   
   const isActive = (path: string) => {
     return location.pathname === path;
   };
 
+  const handleLogout = () => {
+    // Clear authentication data
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("user");
+    
+    // Notify user
+    toast.success("You have been logged out successfully");
+    
+    // Redirect to login page
+    navigate("/login");
+  };
+
   const menuItems = [
     {
       title: "Dashboard",
-      path: "/",
+      path: "/dashboard",
       icon: BarChart3,
     },
     {
@@ -76,7 +90,7 @@ export function AppSidebar() {
     {
       title: "Bank Applications",
       path: "/bank-applications",
-      icon: Building2, // Changed from BankIcon to Building2
+      icon: Building2,
       subItems: [
         {
           title: "Submitted",
@@ -100,10 +114,10 @@ export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarHeader className="flex flex-col items-center justify-center p-6">
-        <div className="flex items-center space-x-2">
+        <Link to="/dashboard" className="flex items-center space-x-2">
           <Calculator className="w-8 h-8 text-primary" />
           <h1 className="text-xl font-semibold">TAB Analytics</h1>
-        </div>
+        </Link>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
@@ -144,7 +158,10 @@ export function AppSidebar() {
       </SidebarContent>
       <SidebarFooter className="p-4">
         <SidebarMenuButton asChild className="w-full">
-          <button className="flex items-center space-x-2 text-destructive hover:bg-destructive/10">
+          <button 
+            className="flex items-center space-x-2 text-destructive hover:bg-destructive/10"
+            onClick={handleLogout}
+          >
             <LogOut className="w-5 h-5" />
             <span>Logout</span>
           </button>

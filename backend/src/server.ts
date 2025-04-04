@@ -11,6 +11,7 @@ import softwarePaymentRoutes from './routes/softwarePayment.routes';
 import bankApplicationRoutes from './routes/bankApplication.routes';
 import timelineEventRoutes from './routes/timelineEvent.routes';
 import userRoutes from './routes/user.routes';
+import setupRoutes from './routes/setup.routes';
 
 // Load environment variables
 dotenv.config();
@@ -36,6 +37,7 @@ app.use('/api/software-payments', softwarePaymentRoutes);
 app.use('/api/bank-applications', bankApplicationRoutes);
 app.use('/api/timeline-events', timelineEventRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/setup', setupRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -53,7 +55,7 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 
 // Start the server
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT} in ${process.env.NODE_ENV} mode`);
+  console.log(`Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
 });
 
 export default app;

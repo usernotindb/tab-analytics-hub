@@ -39,7 +39,7 @@ export const login = async (req: Request, res: Response) => {
     // Generate JWT token
     const token = jwt.sign(
       { userId: user.id, role: user.role },
-      process.env.JWT_SECRET || '',
+      process.env.JWT_SECRET || 'default-secret-key-change-in-production',
       { expiresIn: process.env.JWT_EXPIRY || '24h' }
     );
     
@@ -90,7 +90,7 @@ export const register = async (req: Request, res: Response) => {
     // Generate JWT token
     const token = jwt.sign(
       { userId: insertId, role },
-      process.env.JWT_SECRET || '',
+      process.env.JWT_SECRET || 'default-secret-key-change-in-production',
       { expiresIn: process.env.JWT_EXPIRY || '24h' }
     );
     
