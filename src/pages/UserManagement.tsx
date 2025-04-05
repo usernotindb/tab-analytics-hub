@@ -1,6 +1,4 @@
-
 import { useState, useEffect } from "react";
-import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,6 +47,7 @@ import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { User } from "@/lib/schema";
 
 const userFormSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -62,11 +61,10 @@ const userFormSchema = z.object({
 type UserFormValues = z.infer<typeof userFormSchema>;
 
 const UserManagement = () => {
-  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState(null);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const queryClient = useQueryClient();
 
   const form = useForm<UserFormValues>({
@@ -89,7 +87,7 @@ const UserManagement = () => {
   });
 
   // Fetch users
-  const { data: users = [], isLoading, error } = useQuery({
+  const { data: users = [], isLoading, error } = useQuery<User[]>({
     queryKey: ['users'],
     queryFn: async () => {
       try {
@@ -111,7 +109,7 @@ const UserManagement = () => {
       setIsCreateDialogOpen(false);
       form.reset();
     },
-    onError: (error) => {
+    onError: () => {
       toast.error("Failed to create user");
     },
   });
@@ -127,7 +125,7 @@ const UserManagement = () => {
       setIsEditDialogOpen(false);
       editForm.reset();
     },
-    onError: (error) => {
+    onError: () => {
       toast.error("Failed to update user");
     },
   });
@@ -141,7 +139,7 @@ const UserManagement = () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       toast.success("User deleted successfully");
     },
-    onError: (error) => {
+    onError: () => {
       toast.error("Failed to delete user");
     },
   });
@@ -163,7 +161,7 @@ const UserManagement = () => {
   };
 
   // Handle edit user
-  const handleEditUser = (user) => {
+  const handleEditUser = (user: User) => {
     setSelectedUser(user);
     editForm.reset({
       name: user.name,
@@ -194,7 +192,7 @@ const UserManagement = () => {
     if (error) {
       toast.error("Failed to load users");
     }
-  }, [error, toast]);
+  }, [error]);
 
   return (
     <div className="space-y-6 animate-fade-in">

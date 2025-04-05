@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -11,14 +10,23 @@ import { toast } from "sonner";
 import { CheckCircle, AlertCircle, RefreshCw, Server, Database, Activity, Clock } from "lucide-react";
 import configService from "@/services/configService";
 
+interface HealthData {
+  status: string;
+  message?: string;
+}
+
+interface DbConnectionResult {
+  success: boolean;
+  message: string;
+}
+
 const SystemHealth = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const [memoryUsage, setMemoryUsage] = useState(65);
   const [cpuUsage, setCpuUsage] = useState(42);
   const [diskUsage, setDiskUsage] = useState(78);
   
-  // Fetch system health
-  const { data: healthData, isLoading, error, refetch } = useQuery({
+  const { data: healthData, isLoading, error, refetch } = useQuery<HealthData>({
     queryKey: ['system', 'health'],
     queryFn: async () => {
       try {
@@ -29,7 +37,6 @@ const SystemHealth = () => {
     },
   });
   
-  // Simulate changing system metrics
   useEffect(() => {
     const interval = setInterval(() => {
       setMemoryUsage(prev => Math.min(Math.max(prev + (Math.random() * 10 - 5), 15), 95));
@@ -40,15 +47,13 @@ const SystemHealth = () => {
     return () => clearInterval(interval);
   }, []);
   
-  // Reset API configuration
   const handleResetApiConfig = () => {
     configService.resetApiUrl();
     toast.success("API configuration has been reset to default");
     refetch();
   };
   
-  // Test database connection
-  const { data: dbStatus, refetch: refetchDb } = useQuery({
+  const { data: dbStatus, refetch: refetchDb } = useQuery<DbConnectionResult>({
     queryKey: ['system', 'database'],
     queryFn: async () => {
       try {
@@ -63,7 +68,7 @@ const SystemHealth = () => {
         return { success: false, message: "Database connection failed" };
       }
     },
-    enabled: false, // Don't run this query on page load
+    enabled: false,
   });
   
   const handleTestDb = () => {

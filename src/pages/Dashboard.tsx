@@ -11,6 +11,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import apiService from "@/services/apiService";
 import { toast } from "sonner";
+import { Customer, Portal, SoftwarePayment, BankApplication } from "@/lib/schema";
 
 const Dashboard = () => {
   const isMobile = useIsMobile();
@@ -21,7 +22,7 @@ const Dashboard = () => {
   }, []);
 
   // Fetch customers data
-  const { data: customers = [], isLoading: isLoadingCustomers } = useQuery({
+  const { data: customers = [], isLoading: isLoadingCustomers } = useQuery<Customer[]>({
     queryKey: ['dashboard', 'customers'],
     queryFn: async () => {
       try {
@@ -34,7 +35,7 @@ const Dashboard = () => {
   });
 
   // Fetch portals data
-  const { data: portals = [], isLoading: isLoadingPortals } = useQuery({
+  const { data: portals = [], isLoading: isLoadingPortals } = useQuery<Portal[]>({
     queryKey: ['dashboard', 'portals'],
     queryFn: async () => {
       try {
@@ -47,7 +48,7 @@ const Dashboard = () => {
   });
 
   // Fetch software payments data
-  const { data: payments = [], isLoading: isLoadingSoftware } = useQuery({
+  const { data: payments = [], isLoading: isLoadingSoftware } = useQuery<SoftwarePayment[]>({
     queryKey: ['dashboard', 'software-payments'],
     queryFn: async () => {
       try {
@@ -60,7 +61,7 @@ const Dashboard = () => {
   });
 
   // Fetch bank applications data
-  const { data: applications = [], isLoading: isLoadingApplications } = useQuery({
+  const { data: applications = [], isLoading: isLoadingApplications } = useQuery<BankApplication[]>({
     queryKey: ['dashboard', 'bank-applications'],
     queryFn: async () => {
       try {
@@ -256,7 +257,7 @@ const Dashboard = () => {
 };
 
 // Helper functions
-function processCustomerGrowth(customers) {
+function processCustomerGrowth(customers: Customer[]) {
   // Group customers by month
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const currentYear = new Date().getFullYear();
@@ -291,12 +292,12 @@ function processCustomerGrowth(customers) {
   return data;
 }
 
-function calculatePercentChange(current, previous) {
+function calculatePercentChange(current: number, previous: number) {
   if (previous === 0) return 0;
   return ((current - previous) / previous) * 100;
 }
 
-function formatPercentChange(percent) {
+function formatPercentChange(percent: number) {
   const sign = percent >= 0 ? '+' : '';
   return `${sign}${percent.toFixed(1)}%`;
 }

@@ -1,8 +1,6 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -10,11 +8,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DatePickerWithRange } from "@/components/ui/date-range-picker";
 import { useQuery } from "@tanstack/react-query";
 import { 
-  Bar, 
   BarChart, 
   ResponsiveContainer, 
   XAxis, 
@@ -31,31 +27,35 @@ import {
 import { toast } from "sonner";
 import { 
   Download, 
-  FileText, 
-  Filter, 
   BarChart3, 
   PieChart as PieChartIcon, 
-  LineChart as LineChartIcon,
-  Users
+  LineChart as LineChartIcon
 } from "lucide-react";
-import apiService from "@/services/apiService";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { DateRange } from "react-day-picker";
+
+interface ReportDataItem {
+  name: string;
+  value: number;
+  change?: string;
+}
 
 const Reports = () => {
   const [reportType, setReportType] = useState("customer");
-  const [dateRange, setDateRange] = useState({ from: new Date(2025, 0, 1), to: new Date() });
+  const [dateRange, setDateRange] = useState<DateRange>({ from: new Date(2025, 0, 1), to: new Date() });
   const [selectedChart, setSelectedChart] = useState("bar");
   const isMobile = useIsMobile();
   
-  // Fetch report data
-  const { data: reportData = [], isLoading } = useQuery({
+  const handleDateRangeChange = (range: DateRange | undefined) => {
+    if (range) {
+      setDateRange(range);
+    }
+  };
+  
+  const { data: reportData = [], isLoading } = useQuery<ReportDataItem[]>({
     queryKey: ['reports', reportType, dateRange],
     queryFn: async () => {
       try {
-        // This would be a real API call in production
-        // return await apiService.get(`/reports/${reportType}?from=${dateRange.from.toISOString()}&to=${dateRange.to.toISOString()}`);
-        
-        // For demo, return mock data based on report type
         switch (reportType) {
           case "customer":
             return getMockCustomerData();
@@ -74,7 +74,7 @@ const Reports = () => {
       }
     },
   });
-  
+
   const handleExportReport = () => {
     toast.success("Report exported to CSV");
   };
@@ -241,7 +241,7 @@ const Reports = () => {
             
             <div>
               <label className="text-sm font-medium mb-2 block">Date Range</label>
-              <DatePickerWithRange date={dateRange} setDate={setDateRange} />
+              <DatePickerWithRange date={dateRange} setDate={handleDateRangeChange} />
             </div>
             
             <div>
@@ -350,10 +350,9 @@ const Reports = () => {
       </Card>
     </div>
   );
-};
+}
 
-// Mock data generators
-function getMockCustomerData() {
+function getMockCustomerData(): ReportDataItem[] {
   return [
     { name: "Jan", value: 42, change: "+5.0%" },
     { name: "Feb", value: 57, change: "+35.7%" },
@@ -364,7 +363,7 @@ function getMockCustomerData() {
   ];
 }
 
-function getMockRevenueData() {
+function getMockRevenueData(): ReportDataItem[] {
   return [
     { name: "CRM Software", value: 45000 },
     { name: "Accounting", value: 32000 },
@@ -374,7 +373,7 @@ function getMockRevenueData() {
   ];
 }
 
-function getMockPortalData() {
+function getMockPortalData(): ReportDataItem[] {
   return [
     { name: "Ready", value: 75 },
     { name: "Not Ready", value: 35 },
@@ -383,7 +382,7 @@ function getMockPortalData() {
   ];
 }
 
-function getMockApplicationData() {
+function getMockApplicationData(): ReportDataItem[] {
   return [
     { name: "Submitted", value: 62 },
     { name: "Processing", value: 35 },
