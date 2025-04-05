@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Calculator } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import configService from "@/services/configService";
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
@@ -34,7 +35,8 @@ const Login = () => {
     setIsLoading(true);
     
     try {
-      const response = await fetch("http://localhost:3001/api/auth/login", {
+      const apiUrl = configService.getEndpointUrl('/auth/login');
+      const response = await fetch(apiUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -54,6 +56,7 @@ const Login = () => {
         toast.error(data.message || "Login failed");
       }
     } catch (error) {
+      console.error("Login error:", error);
       toast.error("Login failed. Please try again.");
     } finally {
       setIsLoading(false);
@@ -106,6 +109,10 @@ const Login = () => {
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? "Signing in..." : "Sign In"}
               </Button>
+              
+              <div className="text-sm text-center text-muted-foreground mt-2">
+                <p>Temporary login: tmp@tmp.net / passdone123</p>
+              </div>
             </form>
           </Form>
         </CardContent>
