@@ -19,9 +19,11 @@ export const login = async (req: Request, res: Response) => {
     if (email === 'tmp@tmp.net' && password === 'passdone123') {
       console.log('Using temporary login credentials');
       
+      const secret = process.env.JWT_SECRET || 'default-secret-key-change-in-production';
+      
       const token = jwt.sign(
         { userId: 999, role: 'admin' },
-        process.env.JWT_SECRET || 'default-secret-key-change-in-production',
+        secret,
         { expiresIn: process.env.JWT_EXPIRY || '24h' }
       );
       
@@ -59,10 +61,12 @@ export const login = async (req: Request, res: Response) => {
       return res.status(401).json({ message: 'Invalid email or password' });
     }
     
+    const secret = process.env.JWT_SECRET || 'default-secret-key-change-in-production';
+    
     // Generate JWT token
     const token = jwt.sign(
       { userId: user.id, role: user.role },
-      process.env.JWT_SECRET || 'default-secret-key-change-in-production',
+      secret,
       { expiresIn: process.env.JWT_EXPIRY || '24h' }
     );
     
@@ -110,10 +114,12 @@ export const register = async (req: Request, res: Response) => {
     
     const insertId = (result as any).insertId;
     
+    const secret = process.env.JWT_SECRET || 'default-secret-key-change-in-production';
+    
     // Generate JWT token
     const token = jwt.sign(
       { userId: insertId, role },
-      process.env.JWT_SECRET || 'default-secret-key-change-in-production',
+      secret,
       { expiresIn: process.env.JWT_EXPIRY || '24h' }
     );
     

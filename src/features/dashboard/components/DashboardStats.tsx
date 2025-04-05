@@ -29,7 +29,7 @@ export const DashboardStats = ({ dashboardData }: DashboardStatsProps) => {
       title: "Total Customers",
       value: totalCustomers.toString() || "145",
       change: formatPercentChange(percentChangeCustomers),
-      trend: percentChangeCustomers >= 0 ? "up" : "down",
+      trend: percentChangeCustomers >= 0 ? "up" : "down" as "up" | "down",
       icon: Users,
       color: "bg-blue-50 text-blue-500 dark:bg-blue-900/20 dark:text-blue-300"
     },
@@ -37,7 +37,7 @@ export const DashboardStats = ({ dashboardData }: DashboardStatsProps) => {
       title: "Portals Ready",
       value: readyPortals.toString() || "72",
       change: formatPercentChange(percentChangePortalsReady),
-      trend: percentChangePortalsReady >= 0 ? "up" : "down",
+      trend: percentChangePortalsReady >= 0 ? "up" : "down" as "up" | "down",
       icon: CheckCircle,
       color: "bg-green-50 text-green-500 dark:bg-green-900/20 dark:text-green-300"
     },
@@ -45,7 +45,7 @@ export const DashboardStats = ({ dashboardData }: DashboardStatsProps) => {
       title: "Portals Not Ready",
       value: notReadyPortals.toString() || "33",
       change: formatPercentChange(percentChangePortalsNotReady),
-      trend: percentChangePortalsNotReady >= 0 ? "up" : "down",
+      trend: percentChangePortalsNotReady >= 0 ? "up" : "down" as "up" | "down",
       icon: XCircle,
       color: "bg-red-50 text-red-500 dark:bg-red-900/20 dark:text-red-300"
     },
@@ -53,7 +53,7 @@ export const DashboardStats = ({ dashboardData }: DashboardStatsProps) => {
       title: "Paid Software",
       value: paidSoftware.toString() || "98",
       change: formatPercentChange(percentChangePaidSoftware),
-      trend: percentChangePaidSoftware >= 0 ? "up" : "down",
+      trend: percentChangePaidSoftware >= 0 ? "up" : "down" as "up" | "down",
       icon: CreditCard,
       color: "bg-purple-50 text-purple-500 dark:bg-purple-900/20 dark:text-purple-300"
     },
@@ -66,8 +66,6 @@ export const DashboardStats = ({ dashboardData }: DashboardStatsProps) => {
           key={stat.title} 
           {...stat} 
           isLoading={isLoading}
-          // Add animation delay based on index
-          // This is handled in CSS with the animate-slide-in class now
         />
       ))}
     </div>
