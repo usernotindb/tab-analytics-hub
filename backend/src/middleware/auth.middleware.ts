@@ -36,7 +36,7 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
     }
     
     const token = parts[1];
-    const secret = process.env.JWT_SECRET || '';
+    const secret = process.env.JWT_SECRET || 'default-secret-key-change-in-production';
     
     if (!secret) {
       console.error('JWT_SECRET is not defined');

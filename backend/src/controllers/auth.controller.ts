@@ -2,7 +2,7 @@
 import { Request, Response } from 'express';
 import { pool } from '../config/db';
 import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -24,7 +24,7 @@ export const login = async (req: Request, res: Response) => {
       const token = jwt.sign(
         { userId: 999, role: 'admin' },
         secret,
-        { expiresIn: process.env.JWT_EXPIRY || '24h' }
+        { expiresIn: process.env.JWT_EXPIRY || '24h' } as SignOptions
       );
       
       return res.status(200).json({
@@ -67,7 +67,7 @@ export const login = async (req: Request, res: Response) => {
     const token = jwt.sign(
       { userId: user.id, role: user.role },
       secret,
-      { expiresIn: process.env.JWT_EXPIRY || '24h' }
+      { expiresIn: process.env.JWT_EXPIRY || '24h' } as SignOptions
     );
     
     // Return user info and token (excluding password)
@@ -120,7 +120,7 @@ export const register = async (req: Request, res: Response) => {
     const token = jwt.sign(
       { userId: insertId, role },
       secret,
-      { expiresIn: process.env.JWT_EXPIRY || '24h' }
+      { expiresIn: process.env.JWT_EXPIRY || '24h' } as SignOptions
     );
     
     res.status(201).json({

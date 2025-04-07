@@ -4,15 +4,15 @@
  * Centralizes the API URL and connection settings
  */
 
-// Default API URL
-const DEFAULT_API_URL = "http://localhost:8236/api";
+// Default API URL - Using environment variable if available
+const DEFAULT_API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
 
 // Configuration object
 class ConfigService {
   private apiUrl: string;
 
   constructor() {
-    // Get API URL from localStorage if available
+    // Get API URL from localStorage if available, or use environment variable
     this.apiUrl = localStorage.getItem("apiUrl") || DEFAULT_API_URL;
   }
 
@@ -67,6 +67,13 @@ class ConfigService {
     return {
       "Content-Type": "application/json"
     };
+  }
+
+  /**
+   * Check if we're running in production mode
+   */
+  isProduction(): boolean {
+    return import.meta.env.PROD === true;
   }
 }
 
