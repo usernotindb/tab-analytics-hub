@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
@@ -25,7 +24,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Search, Plus, MoreHorizontal, Eye, Edit, Trash, Send, AlertTriangle } from "lucide-react";
+import { Search, Plus, MoreHorizontal, Eye, Edit, Trash, Send, AlertTriangle, CheckCircle } from "lucide-react";
 
 interface BankApplication {
   id: number;
@@ -39,7 +38,6 @@ interface BankApplication {
   status: 'incomplete' | 'ready' | 'review';
 }
 
-// Sample data of unsubmitted bank applications
 const unsubmittedApplications: BankApplication[] = [
   {
     id: 5,
@@ -76,7 +74,6 @@ const unsubmittedApplications: BankApplication[] = [
   },
 ];
 
-// New application form component
 const NewApplicationForm = ({ onComplete }: { onComplete: (data: Partial<BankApplication>) => void }) => {
   const [formData, setFormData] = useState({
     userId: "",
