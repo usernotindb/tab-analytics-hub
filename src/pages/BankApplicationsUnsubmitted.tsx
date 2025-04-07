@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+
+import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,43 +13,81 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Search, Plus, MoreHorizontal, Eye, Edit, Trash, CheckCircle2 } from "lucide-react";
-import { BankApplication } from "@/lib/schema";
-import { 
-  getBankApplicationsByStatus, 
-  createBankApplication, 
-  deleteBankApplication,
-  updateBankApplication 
-} from "@/lib/api";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Search, Plus, MoreHorizontal, Eye, Edit, Trash, Send, AlertTriangle } from "lucide-react";
 
-const ApplicationForm = ({ onComplete }: { onComplete: (data: Partial<BankApplication>) => void }) => {
+interface BankApplication {
+  id: number;
+  draftId: string;
+  userId: string;
+  customer: string;
+  bank: string;
+  creationDate: string;
+  lastUpdated: string;
+  product: string;
+  status: 'incomplete' | 'ready' | 'review';
+}
+
+// Sample data of unsubmitted bank applications
+const unsubmittedApplications: BankApplication[] = [
+  {
+    id: 5,
+    draftId: "DRAFT-2023-001",
+    userId: "14545811",
+    customer: "Rapid Tax Service",
+    bank: "First National Bank",
+    creationDate: "2023-04-01",
+    lastUpdated: "2023-04-05",
+    product: "Business Loan",
+    status: 'incomplete',
+  },
+  {
+    id: 6,
+    draftId: "DRAFT-2023-002",
+    userId: "14545812",
+    customer: "Elite Tax Advisors",
+    bank: "Citizens Bank",
+    creationDate: "2023-04-02",
+    lastUpdated: "2023-04-07",
+    product: "Line of Credit",
+    status: 'ready',
+  },
+  {
+    id: 7,
+    draftId: "DRAFT-2023-003",
+    userId: "14545813",
+    customer: "Fast Tax Returns",
+    bank: "Capital One",
+    creationDate: "2023-04-03",
+    lastUpdated: "2023-04-06",
+    product: "Business Credit Card",
+    status: 'review',
+  },
+];
+
+// New application form component
+const NewApplicationForm = ({ onComplete }: { onComplete: (data: Partial<BankApplication>) => void }) => {
   const [formData, setFormData] = useState({
-    customerName: "",
-    applicationType: "Personal Loan",
-    amount: 0,
-    bankName: "",
-    notes: ""
+    userId: "",
+    customer: "",
+    bank: "",
+    product: ""
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ 
-      ...prev, 
-      [name]: name === 'amount' ? Number(value) : value 
-    }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -60,55 +98,35 @@ const ApplicationForm = ({ onComplete }: { onComplete: (data: Partial<BankApplic
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <label htmlFor="customerName" className="text-sm font-medium">Customer Name</label>
+        <label htmlFor="userId" className="text-sm font-medium">User ID</label>
         <Input 
-          id="customerName" 
-          name="customerName" 
-          value={formData.customerName} 
+          id="userId" 
+          name="userId" 
+          value={formData.userId} 
           onChange={handleChange} 
-          placeholder="Enter Customer Name" 
+          placeholder="Enter User ID" 
           required
         />
       </div>
       
       <div className="space-y-2">
-        <label htmlFor="applicationType" className="text-sm font-medium">Application Type</label>
-        <select 
-          id="applicationType" 
-          name="applicationType" 
-          value={formData.applicationType} 
-          onChange={handleChange}
-          className="w-full p-2 border rounded-md"
-          required
-        >
-          <option value="Personal Loan">Personal Loan</option>
-          <option value="Business Loan">Business Loan</option>
-          <option value="Mortgage">Mortgage</option>
-          <option value="Credit Card">Credit Card</option>
-          <option value="Line of Credit">Line of Credit</option>
-        </select>
-      </div>
-
-      <div className="space-y-2">
-        <label htmlFor="amount" className="text-sm font-medium">Amount ($)</label>
+        <label htmlFor="customer" className="text-sm font-medium">Customer</label>
         <Input 
-          id="amount" 
-          name="amount" 
-          type="number" 
-          step="0.01" 
-          min="0"
-          value={formData.amount} 
+          id="customer" 
+          name="customer" 
+          value={formData.customer} 
           onChange={handleChange} 
+          placeholder="Enter Customer Name" 
           required
         />
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="bankName" className="text-sm font-medium">Bank Name</label>
+        <label htmlFor="bank" className="text-sm font-medium">Bank</label>
         <Input 
-          id="bankName" 
-          name="bankName" 
-          value={formData.bankName} 
+          id="bank" 
+          name="bank" 
+          value={formData.bank} 
           onChange={handleChange} 
           placeholder="Enter Bank Name" 
           required
@@ -116,159 +134,110 @@ const ApplicationForm = ({ onComplete }: { onComplete: (data: Partial<BankApplic
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="notes" className="text-sm font-medium">Notes</label>
-        <textarea 
-          id="notes" 
-          name="notes" 
-          value={formData.notes} 
-          onChange={handleChange} 
-          placeholder="Add any additional notes"
-          className="w-full p-2 border rounded-md h-24 resize-none"
-        />
+        <label htmlFor="product" className="text-sm font-medium">Product</label>
+        <select 
+          id="product" 
+          name="product" 
+          value={formData.product} 
+          onChange={handleChange}
+          className="w-full p-2 border rounded-md"
+          required
+        >
+          <option value="">Select a product</option>
+          <option value="Business Loan">Business Loan</option>
+          <option value="Line of Credit">Line of Credit</option>
+          <option value="Business Credit Card">Business Credit Card</option>
+          <option value="Advance Loan">Advance Loan</option>
+        </select>
       </div>
 
       <div className="flex justify-end">
-        <Button type="submit">Create Application</Button>
+        <Button type="submit">Create Draft</Button>
       </div>
     </form>
   );
 };
 
 const BankApplicationsUnsubmitted = () => {
-  const navigate = useNavigate();
   const { toast } = useToast();
+  const [applications, setApplications] = useState<BankApplication[]>(unsubmittedApplications);
   const [searchTerm, setSearchTerm] = useState("");
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const queryClient = useQueryClient();
-
-  const { data: applications = [], isLoading, error } = useQuery({
-    queryKey: ['bankApplications', 'unsubmitted'],
-    queryFn: () => getBankApplicationsByStatus('unsubmitted'),
-  });
-
-  const createMutation = useMutation({
-    mutationFn: (newApplication: Omit<BankApplication, 'id' | 'created_at' | 'updated_at'>) => 
-      createBankApplication(newApplication),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bankApplications'] });
-      setIsFormOpen(false);
-      toast({
-        title: "Application created",
-        description: "The new application has been added.",
-      });
-    },
-    onError: (error) => {
-      console.error("Error creating application:", error);
-      toast({
-        title: "Error",
-        description: "Failed to create application",
-        variant: "destructive",
-      });
-    }
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: (id: number) => deleteBankApplication(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bankApplications'] });
-      toast({
-        title: "Application deleted",
-        description: "The application has been removed.",
-      });
-    },
-    onError: (error) => {
-      console.error("Error deleting application:", error);
-      toast({
-        title: "Error",
-        description: "Failed to delete application",
-        variant: "destructive",
-      });
-    }
-  });
-
-  const submitMutation = useMutation({
-    mutationFn: (id: number) => 
-      updateBankApplication(id, { 
-        status: 'submitted', 
-        submittedDate: new Date().toISOString().split('T')[0]
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bankApplications'] });
-      toast({
-        title: "Application submitted",
-        description: "The application has been marked as submitted.",
-      });
-    },
-    onError: (error) => {
-      console.error("Error submitting application:", error);
-      toast({
-        title: "Error",
-        description: "Failed to submit application",
-        variant: "destructive",
-      });
-    }
-  });
 
   const filteredApplications = applications.filter((app) => {
     const searchTermLower = searchTerm.toLowerCase();
     return (
-      app.customerName.toLowerCase().includes(searchTermLower) ||
-      app.applicationType.toLowerCase().includes(searchTermLower) ||
-      app.bankName.toLowerCase().includes(searchTermLower)
+      app.draftId.toLowerCase().includes(searchTermLower) ||
+      app.userId.toLowerCase().includes(searchTermLower) ||
+      app.customer.toLowerCase().includes(searchTermLower) ||
+      app.bank.toLowerCase().includes(searchTermLower) ||
+      app.product.toLowerCase().includes(searchTermLower) ||
+      app.status.toLowerCase().includes(searchTermLower)
     );
   });
 
   const handleDelete = (id: number) => {
-    deleteMutation.mutate(id);
-  };
-
-  const handleAddApplication = (data: Partial<BankApplication>) => {
-    createMutation.mutate({
-      customerId: 0,
-      customerName: data.customerName || "",
-      applicationType: data.applicationType || "Personal Loan",
-      status: 'unsubmitted',
-      amount: data.amount || 0,
-      bankName: data.bankName || "",
-      notes: data.notes
+    setApplications(applications.filter(app => app.id !== id));
+    toast({
+      title: "Draft deleted",
+      description: "The application draft has been deleted.",
     });
   };
 
-  const handleMarkAsSubmitted = (id: number) => {
-    submitMutation.mutate(id);
+  const handleSubmit = (id: number) => {
+    setApplications(applications.filter(app => app.id !== id));
+    toast({
+      title: "Application submitted",
+      description: "The application has been successfully submitted to the bank.",
+    });
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+  const handleAddApplication = (data: Partial<BankApplication>) => {
+    const today = new Date();
+    const formattedDate = today.toISOString().split('T')[0];
+    
+    const newApplication: BankApplication = {
+      id: applications.length + 1 + 7, // Start from higher ID to avoid conflicts
+      draftId: `DRAFT-2023-${String(applications.length + 1 + 4).padStart(3, '0')}`,
+      userId: data.userId || "",
+      customer: data.customer || "",
+      bank: data.bank || "",
+      creationDate: formattedDate,
+      lastUpdated: formattedDate,
+      product: data.product || "",
+      status: 'incomplete',
+    };
+    
+    setApplications([...applications, newApplication]);
+    setIsFormOpen(false);
+    toast({
+      title: "Draft created",
+      description: "New application draft has been created.",
+    });
   };
 
-  const viewDetails = (id: number) => {
-    navigate(`/bank-applications/${id}`);
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'incomplete':
+        return <AlertTriangle className="h-4 w-4 text-orange-500" />;
+      case 'ready':
+        return <CheckCircle className="h-4 w-4 text-green-500" />;
+      case 'review':
+        return <AlertTriangle className="h-4 w-4 text-yellow-500" />;
+      default:
+        return <AlertTriangle className="h-4 w-4 text-gray-500" />;
+    }
   };
-
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-full">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex justify-center items-center h-full">
-        <div className="text-red-500">
-          <p>Error loading applications</p>
-          <p>{error instanceof Error ? error.message : "Unknown error"}</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold tracking-tight">Unsubmitted Bank Applications</h1>
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Unsubmitted Bank Applications</h1>
+          <p className="text-muted-foreground mt-1">
+            Draft applications that haven't been submitted to financial institutions
+          </p>
+        </div>
         
         <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
           <DialogTrigger asChild>
@@ -282,7 +251,7 @@ const BankApplicationsUnsubmitted = () => {
               <DialogTitle>Create New Bank Application</DialogTitle>
             </DialogHeader>
             <div className="py-4">
-              <ApplicationForm onComplete={handleAddApplication} />
+              <NewApplicationForm onComplete={handleAddApplication} />
             </div>
           </DialogContent>
         </Dialog>
@@ -294,7 +263,7 @@ const BankApplicationsUnsubmitted = () => {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input 
-                placeholder="Search applications..." 
+                placeholder="Search unsubmitted applications..." 
                 className="pl-10"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -307,37 +276,38 @@ const BankApplicationsUnsubmitted = () => {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Draft ID</TableHead>
+                  <TableHead>User ID</TableHead>
                   <TableHead>Customer</TableHead>
-                  <TableHead>Application Type</TableHead>
                   <TableHead className="hidden md:table-cell">Bank</TableHead>
-                  <TableHead className="hidden md:table-cell">Amount</TableHead>
+                  <TableHead className="hidden md:table-cell">Product</TableHead>
+                  <TableHead className="hidden lg:table-cell">Last Updated</TableHead>
                   <TableHead className="hidden lg:table-cell">Status</TableHead>
-                  <TableHead className="hidden lg:table-cell">Created</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredApplications.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="h-24 text-center">
+                    <TableCell colSpan={8} className="h-24 text-center">
                       No unsubmitted applications found.
                     </TableCell>
                   </TableRow>
                 ) : (
                   filteredApplications.map((app) => (
                     <TableRow key={app.id}>
-                      <TableCell className="font-medium">{app.customerName}</TableCell>
-                      <TableCell>{app.applicationType}</TableCell>
-                      <TableCell className="hidden md:table-cell">{app.bankName}</TableCell>
-                      <TableCell className="hidden md:table-cell">{formatCurrency(app.amount)}</TableCell>
+                      <TableCell className="font-medium">{app.draftId}</TableCell>
+                      <TableCell>{app.userId}</TableCell>
+                      <TableCell>{app.customer}</TableCell>
+                      <TableCell className="hidden md:table-cell">{app.bank}</TableCell>
+                      <TableCell className="hidden md:table-cell">{app.product}</TableCell>
+                      <TableCell className="hidden lg:table-cell">{app.lastUpdated}</TableCell>
                       <TableCell className="hidden lg:table-cell">
                         <div className="flex items-center gap-2">
-                          <span className="capitalize py-1 px-2 bg-yellow-50 text-yellow-600 rounded-full text-xs">
-                            Unsubmitted
-                          </span>
+                          {getStatusIcon(app.status)}
+                          <span className="capitalize">{app.status}</span>
                         </div>
                       </TableCell>
-                      <TableCell className="hidden lg:table-cell">{new Date(app.created_at).toLocaleDateString()}</TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -347,24 +317,26 @@ const BankApplicationsUnsubmitted = () => {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => viewDetails(app.id)}>
+                            <DropdownMenuItem>
                               <Eye className="mr-2 h-4 w-4" />
                               View details
                             </DropdownMenuItem>
                             <DropdownMenuItem>
                               <Edit className="mr-2 h-4 w-4" />
-                              Edit application
+                              Edit draft
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleMarkAsSubmitted(app.id)}>
-                              <CheckCircle2 className="mr-2 h-4 w-4" />
-                              Mark as submitted
-                            </DropdownMenuItem>
+                            {app.status === 'ready' && (
+                              <DropdownMenuItem onClick={() => handleSubmit(app.id)}>
+                                <Send className="mr-2 h-4 w-4" />
+                                Submit application
+                              </DropdownMenuItem>
+                            )}
                             <DropdownMenuItem 
                               className="text-destructive focus:text-destructive"
                               onClick={() => handleDelete(app.id)}
                             >
                               <Trash className="mr-2 h-4 w-4" />
-                              Delete
+                              Delete draft
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>

@@ -1,7 +1,6 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,28 +19,50 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Search, MoreHorizontal, Eye, Edit, Trash, XCircle, AlertTriangle } from "lucide-react";
-import { getPortalsByStatus } from "@/lib/api-service";
-import { Portal } from "@/lib/schema";
-import { useQuery } from "@tanstack/react-query";
+
+interface Portal {
+  id: number;
+  userId: string;
+  company: string;
+  software: string;
+  creationDate: string;
+  status: string;
+  reason: string;
+}
+
+// Sample data of not ready portals
+const notReadyPortals: Portal[] = [
+  {
+    id: 3,
+    userId: "14545809",
+    company: "Premier Tax Services",
+    software: "TaxPro",
+    creationDate: "2023-01-25",
+    status: "Pending Installation",
+    reason: "Awaiting customer confirmation",
+  },
+  {
+    id: 5,
+    userId: "14545813",
+    company: "Fast Tax Returns",
+    software: "TaxSuite",
+    creationDate: "2023-02-28",
+    status: "Installation Failed",
+    reason: "Compatibility issues with existing software",
+  },
+  {
+    id: 6,
+    userId: "14545814",
+    company: "Pro Tax Advisors",
+    software: "TaxWeb",
+    creationDate: "2023-03-15",
+    status: "Setup Required",
+    reason: "Missing user credentials",
+  },
+];
 
 const PortalStatusNotReady = () => {
-  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
-  
-  const { data: notReadyPortals = [], isLoading, error } = useQuery({
-    queryKey: ['portals', 'installed', false],
-    queryFn: () => getPortalsByStatus(false),
-  });
-
-  useEffect(() => {
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to load not ready portals. Please try again later.",
-        variant: "destructive",
-      });
-    }
-  }, [error, toast]);
 
   const filteredPortals = notReadyPortals.filter((portal) => {
     const searchTermLower = searchTerm.toLowerCase();
@@ -49,22 +70,22 @@ const PortalStatusNotReady = () => {
       portal.userId.toLowerCase().includes(searchTermLower) ||
       portal.company.toLowerCase().includes(searchTermLower) ||
       portal.software.toLowerCase().includes(searchTermLower) ||
-      portal.type.toLowerCase().includes(searchTermLower)
+      portal.status.toLowerCase().includes(searchTermLower) ||
+      portal.reason.toLowerCase().includes(searchTermLower)
     );
   });
 
-  const getStatusIcon = (portal: Portal) => {
-    if (!portal.installed) {
-      return <XCircle className="h-4 w-4 text-red-500" />;
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "Pending Installation":
+        return <AlertTriangle className="h-4 w-4 text-yellow-500" />;
+      case "Installation Failed":
+        return <XCircle className="h-4 w-4 text-red-500" />;
+      case "Setup Required":
+        return <AlertTriangle className="h-4 w-4 text-orange-500" />;
+      default:
+        return <XCircle className="h-4 w-4 text-red-500" />;
     }
-    return <AlertTriangle className="h-4 w-4 text-yellow-500" />;
-  };
-
-  const getStatusText = (portal: Portal) => {
-    if (!portal.installed) {
-      return "Not Installed";
-    }
-    return "Installation Pending";
   };
 
   return (
@@ -79,9 +100,7 @@ const PortalStatusNotReady = () => {
         
         <div className="flex items-center gap-2">
           <XCircle className="h-5 w-5 text-red-500" />
-          <span className="text-red-500 font-medium">
-            {isLoading ? "Loading..." : `${notReadyPortals.length} Not Ready`}
-          </span>
+          <span className="text-red-500 font-medium">{notReadyPortals.length} Not Ready</span>
         </div>
       </div>
 
@@ -109,20 +128,12 @@ const PortalStatusNotReady = () => {
                   <TableHead>Software</TableHead>
                   <TableHead className="hidden md:table-cell">Status</TableHead>
                   <TableHead className="hidden lg:table-cell">Creation Date</TableHead>
-                  <TableHead className="hidden lg:table-cell">Type</TableHead>
+                  <TableHead className="hidden lg:table-cell">Reason</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {isLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="h-24 text-center">
-                      <div className="flex justify-center items-center">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ) : filteredPortals.length === 0 ? (
+                {filteredPortals.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7} className="h-24 text-center">
                       No portals found.
@@ -136,14 +147,12 @@ const PortalStatusNotReady = () => {
                       <TableCell>{portal.software}</TableCell>
                       <TableCell className="hidden md:table-cell">
                         <div className="flex items-center gap-2">
-                          {getStatusIcon(portal)}
-                          <span>{getStatusText(portal)}</span>
+                          {getStatusIcon(portal.status)}
+                          <span>{portal.status}</span>
                         </div>
                       </TableCell>
-                      <TableCell className="hidden lg:table-cell">
-                        {new Date(portal.created_at).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell className="hidden lg:table-cell">{portal.type}</TableCell>
+                      <TableCell className="hidden lg:table-cell">{portal.creationDate}</TableCell>
+                      <TableCell className="hidden lg:table-cell">{portal.reason}</TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>

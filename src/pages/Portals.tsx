@@ -26,17 +26,61 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Search, Plus, MoreHorizontal, Eye, Edit, Trash, Loader2 } from "lucide-react";
+import { Search, Plus, MoreHorizontal, Eye, Edit, Trash } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getPortals, createPortal, deletePortal } from "@/lib/api-service";
-import { Portal } from "@/lib/schema";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+
+// Define the Portal interface
+interface Portal {
+  id: number;
+  userId: string;
+  company: string;
+  software: string;
+  type: string;
+  userType: string;
+  installed: boolean;
+  license: string;
+  installed_by: string;
+}
+
+// Sample data - in a real app, this would come from your API
+const portalData: Portal[] = [
+  {
+    id: 1,
+    userId: "14545807",
+    company: "Azteca Tax Systems",
+    software: "Xlink",
+    type: "Desktop",
+    userType: "Master User",
+    installed: true,
+    license: "1040 License",
+    installed_by: "John Doe",
+  },
+  {
+    id: 2,
+    userId: "14545808",
+    company: "Global Tax Solutions",
+    software: "TaxWeb",
+    type: "Online",
+    userType: "Admin",
+    installed: true,
+    license: "Full Service",
+    installed_by: "Jane Smith",
+  },
+  {
+    id: 3,
+    userId: "14545809",
+    company: "Premier Tax Services",
+    software: "TaxPro",
+    type: "Desktop",
+    userType: "Standard User",
+    installed: false,
+    license: "1040 License",
+    installed_by: "N/A",
+  },
+];
 
 // Component for the installation form
-const InstallationForm = ({ onComplete, isPending }: { 
-  onComplete: (data: Partial<Portal>) => void, 
-  isPending: boolean 
-}) => {
+const InstallationForm = ({ onComplete }: { onComplete: (data: Partial<Portal>) => void }) => {
   const [formData, setFormData] = useState({
     userId: "",
     company: "",
@@ -67,7 +111,6 @@ const InstallationForm = ({ onComplete, isPending }: {
           onChange={handleChange} 
           placeholder="Enter User ID" 
           required
-          disabled={isPending}
         />
       </div>
       
@@ -80,7 +123,6 @@ const InstallationForm = ({ onComplete, isPending }: {
           onChange={handleChange} 
           placeholder="Enter Company Name" 
           required
-          disabled={isPending}
         />
       </div>
 
@@ -93,7 +135,6 @@ const InstallationForm = ({ onComplete, isPending }: {
           onChange={handleChange} 
           placeholder="Enter Software Name" 
           required
-          disabled={isPending}
         />
       </div>
 
@@ -106,7 +147,6 @@ const InstallationForm = ({ onComplete, isPending }: {
           onChange={handleChange}
           className="w-full p-2 border rounded-md"
           required
-          disabled={isPending}
         >
           <option value="Desktop">Desktop</option>
           <option value="Online">Online</option>
@@ -123,7 +163,6 @@ const InstallationForm = ({ onComplete, isPending }: {
           onChange={handleChange}
           className="w-full p-2 border rounded-md"
           required
-          disabled={isPending}
         >
           <option value="Master User">Master User</option>
           <option value="Admin">Admin</option>
@@ -140,21 +179,11 @@ const InstallationForm = ({ onComplete, isPending }: {
           onChange={handleChange} 
           placeholder="Enter License Information" 
           required
-          disabled={isPending}
         />
       </div>
 
       <div className="flex justify-end">
-        <Button type="submit" disabled={isPending}>
-          {isPending ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Adding...
-            </>
-          ) : (
-            "Add Installation"
-          )}
-        </Button>
+        <Button type="submit">Add Installation</Button>
       </div>
     </form>
   );
@@ -163,61 +192,9 @@ const InstallationForm = ({ onComplete, isPending }: {
 const Portals = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [portals, setPortals] = useState<Portal[]>(portalData);
   const [searchTerm, setSearchTerm] = useState("");
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const queryClient = useQueryClient();
-
-  const { 
-    data: portals = [], 
-    isLoading, 
-    error 
-  } = useQuery({
-    queryKey: ['portals'],
-    queryFn: getPortals
-  });
-
-  const createMutation = useMutation({
-    mutationFn: (newPortal: Omit<Portal, 'id' | 'created_at' | 'updated_at'>) => {
-      return createPortal(newPortal);
-    },
-    onSuccess: () => {
-      setIsFormOpen(false);
-      toast({
-        title: "Installation added",
-        description: "The new installation has been successfully added.",
-      });
-      queryClient.invalidateQueries({ queryKey: ['portals'] });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: "Failed to add the installation. Please try again.",
-        variant: "destructive"
-      });
-      console.error("Create error:", error);
-    }
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: (id: number) => {
-      return deletePortal(id);
-    },
-    onSuccess: () => {
-      toast({
-        title: "Installation deleted",
-        description: "The installation has been successfully removed.",
-      });
-      queryClient.invalidateQueries({ queryKey: ['portals'] });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: "Failed to delete the installation. Please try again.",
-        variant: "destructive"
-      });
-      console.error("Delete error:", error);
-    }
-  });
 
   const filteredPortals = portals.filter((portal) => {
     const searchTermLower = searchTerm.toLowerCase();
@@ -232,22 +209,32 @@ const Portals = () => {
   });
 
   const handleDelete = (id: number) => {
-    deleteMutation.mutate(id);
+    setPortals(portals.filter(portal => portal.id !== id));
+    toast({
+      title: "Installation deleted",
+      description: "The installation has been successfully removed.",
+    });
   };
 
   const handleAddInstallation = (data: Partial<Portal>) => {
-    const newPortal = {
+    const newPortal: Portal = {
+      id: portals.length + 1,
       userId: data.userId || "",
       company: data.company || "",
-      software: data.software || "", 
+      software: data.software || "",
       type: data.type || "Desktop",
       userType: data.userType || "Standard User",
       installed: true,
       license: data.license || "",
-      installed_by: "Current User" // In a real app, this would be the logged-in user
+      installed_by: "Current User", // In a real app, this would be the logged-in user
     };
     
-    createMutation.mutate(newPortal as Omit<Portal, 'id' | 'created_at' | 'updated_at'>);
+    setPortals([...portals, newPortal]);
+    setIsFormOpen(false);
+    toast({
+      title: "Installation added",
+      description: "The new installation has been successfully added.",
+    });
   };
 
   const viewDetails = (id: number) => {
@@ -271,10 +258,7 @@ const Portals = () => {
               <DialogTitle>Add New Installation</DialogTitle>
             </DialogHeader>
             <div className="py-4">
-              <InstallationForm 
-                onComplete={handleAddInstallation} 
-                isPending={createMutation.isPending}
-              />
+              <InstallationForm onComplete={handleAddInstallation} />
             </div>
           </DialogContent>
         </Dialog>
@@ -310,21 +294,7 @@ const Portals = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {isLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={8} className="h-24 text-center">
-                      <div className="flex justify-center items-center">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ) : error ? (
-                  <TableRow>
-                    <TableCell colSpan={8} className="h-24 text-center text-red-500">
-                      Failed to load data. Please try again.
-                    </TableCell>
-                  </TableRow>
-                ) : filteredPortals.length === 0 ? (
+                {filteredPortals.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={8} className="h-24 text-center">
                       No installations found.
@@ -365,7 +335,6 @@ const Portals = () => {
                             <DropdownMenuItem 
                               className="text-destructive focus:text-destructive"
                               onClick={() => handleDelete(portal.id)}
-                              disabled={deleteMutation.isPending}
                             >
                               <Trash className="mr-2 h-4 w-4" />
                               Delete
