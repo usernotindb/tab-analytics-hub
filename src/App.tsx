@@ -17,6 +17,7 @@ import PortalStatusNotReady from "./pages/PortalStatusNotReady";
 import BankApplicationsSubmitted from "./pages/BankApplicationsSubmitted";
 import BankApplicationsUnsubmitted from "./pages/BankApplicationsUnsubmitted";
 import Settings from "./pages/Settings";
+import NavigationAudit from "./pages/NavigationAudit";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -114,6 +115,14 @@ const App = () => (
               element={
                 <MainLayout>
                   <Settings />
+                </MainLayout>
+              } 
+            />
+            <Route 
+              path="/navigation-audit" 
+              element={
+                <MainLayout>
+                  <NavigationAudit />
                 </MainLayout>
               } 
             />
