@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { MainLayout } from "./components/layout/MainLayout";
+import { DatabaseProvider } from "./hooks/use-database";
 import Dashboard from "./pages/Dashboard";
 import Customers from "./pages/Customers";
 import CustomerDetails from "./pages/CustomerDetails";
@@ -23,101 +24,103 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route 
-            path="/" 
-            element={
-              <MainLayout>
-                <Dashboard />
-              </MainLayout>
-            } 
-          />
-          <Route 
-            path="/customers" 
-            element={
-              <MainLayout>
-                <Customers />
-              </MainLayout>
-            } 
-          />
-          <Route 
-            path="/customers/:id" 
-            element={
-              <MainLayout>
-                <CustomerDetails />
-              </MainLayout>
-            } 
-          />
-          <Route 
-            path="/portals" 
-            element={
-              <MainLayout>
-                <Portals />
-              </MainLayout>
-            } 
-          />
-          <Route 
-            path="/portals/:id" 
-            element={
-              <MainLayout>
-                <PortalDetails />
-              </MainLayout>
-            } 
-          />
-          <Route 
-            path="/paid-software" 
-            element={
-              <MainLayout>
-                <PaidSoftware />
-              </MainLayout>
-            } 
-          />
-          <Route 
-            path="/portal-status/ready" 
-            element={
-              <MainLayout>
-                <PortalStatusReady />
-              </MainLayout>
-            } 
-          />
-          <Route 
-            path="/portal-status/not-ready" 
-            element={
-              <MainLayout>
-                <PortalStatusNotReady />
-              </MainLayout>
-            } 
-          />
-          <Route 
-            path="/bank-applications/submitted" 
-            element={
-              <MainLayout>
-                <BankApplicationsSubmitted />
-              </MainLayout>
-            } 
-          />
-          <Route 
-            path="/bank-applications/unsubmitted" 
-            element={
-              <MainLayout>
-                <BankApplicationsUnsubmitted />
-              </MainLayout>
-            } 
-          />
-          <Route 
-            path="/settings" 
-            element={
-              <MainLayout>
-                <Settings />
-              </MainLayout>
-            } 
-          />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+      <DatabaseProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route 
+              path="/" 
+              element={
+                <MainLayout>
+                  <Dashboard />
+                </MainLayout>
+              } 
+            />
+            <Route 
+              path="/customers" 
+              element={
+                <MainLayout>
+                  <Customers />
+                </MainLayout>
+              } 
+            />
+            <Route 
+              path="/customers/:id" 
+              element={
+                <MainLayout>
+                  <CustomerDetails />
+                </MainLayout>
+              } 
+            />
+            <Route 
+              path="/portals" 
+              element={
+                <MainLayout>
+                  <Portals />
+                </MainLayout>
+              } 
+            />
+            <Route 
+              path="/portals/:id" 
+              element={
+                <MainLayout>
+                  <PortalDetails />
+                </MainLayout>
+              } 
+            />
+            <Route 
+              path="/paid-software" 
+              element={
+                <MainLayout>
+                  <PaidSoftware />
+                </MainLayout>
+              } 
+            />
+            <Route 
+              path="/portal-status/ready" 
+              element={
+                <MainLayout>
+                  <PortalStatusReady />
+                </MainLayout>
+              } 
+            />
+            <Route 
+              path="/portal-status/not-ready" 
+              element={
+                <MainLayout>
+                  <PortalStatusNotReady />
+                </MainLayout>
+              } 
+            />
+            <Route 
+              path="/bank-applications/submitted" 
+              element={
+                <MainLayout>
+                  <BankApplicationsSubmitted />
+                </MainLayout>
+              } 
+            />
+            <Route 
+              path="/bank-applications/unsubmitted" 
+              element={
+                <MainLayout>
+                  <BankApplicationsUnsubmitted />
+                </MainLayout>
+              } 
+            />
+            <Route 
+              path="/settings" 
+              element={
+                <MainLayout>
+                  <Settings />
+                </MainLayout>
+              } 
+            />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </DatabaseProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

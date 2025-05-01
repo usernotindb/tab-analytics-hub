@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -30,6 +29,7 @@ import {
   Save,
   AlertCircle
 } from "lucide-react";
+import { DatabaseStatusCard } from "@/components/database/DatabaseStatusCard";
 
 const Settings = () => {
   const { toast } = useToast();
@@ -444,80 +444,8 @@ const Settings = () => {
         
         <TabsContent value="database">
           <div className="grid gap-6 lg:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Database Connection</CardTitle>
-                <CardDescription>
-                  Configure your database connection settings
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="dbHost">Database Host</Label>
-                  <Input 
-                    id="dbHost" 
-                    name="dbHost" 
-                    value={databaseSettings.dbHost} 
-                    onChange={handleDatabaseChange}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="dbPort">Database Port</Label>
-                  <Input 
-                    id="dbPort" 
-                    name="dbPort" 
-                    value={databaseSettings.dbPort} 
-                    onChange={handleDatabaseChange}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="dbName">Database Name</Label>
-                  <Input 
-                    id="dbName" 
-                    name="dbName" 
-                    value={databaseSettings.dbName} 
-                    onChange={handleDatabaseChange}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="dbUser">Database User</Label>
-                  <Input 
-                    id="dbUser" 
-                    name="dbUser" 
-                    value={databaseSettings.dbUser} 
-                    onChange={handleDatabaseChange}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="dbPassword">Database Password</Label>
-                  <Input 
-                    id="dbPassword" 
-                    name="dbPassword" 
-                    type="password" 
-                    placeholder="••••••••"
-                  />
-                </div>
-                
-                <div className="pt-4">
-                  <Button variant="outline" className="w-full">
-                    Test Connection
-                  </Button>
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Button 
-                  className="space-x-2" 
-                  onClick={() => saveSettings('database connection')}
-                >
-                  <Save className="h-4 w-4" />
-                  <span>Save Connection</span>
-                </Button>
-              </CardFooter>
-            </Card>
+            {/* Database Connection Card */}
+            <DatabaseStatusCard />
             
             <Card>
               <CardHeader>
