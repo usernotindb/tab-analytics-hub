@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
+
+import { useSettings } from "@/hooks/use-settings";
 import { 
   Card, 
   CardContent, 
@@ -30,48 +30,39 @@ import {
   AlertCircle
 } from "lucide-react";
 import { DatabaseStatusCard } from "@/components/database/DatabaseStatusCard";
+import { useState, useEffect } from "react";
 
 const Settings = () => {
-  const { toast } = useToast();
+  const { 
+    settings, 
+    isLoading, 
+    saveProfileSettings, 
+    saveNotificationSettings, 
+    saveCompanySettings, 
+    saveDatabaseSettings 
+  } = useSettings();
   
-  // Profile settings
-  const [profileSettings, setProfileSettings] = useState({
-    name: "Admin User",
-    email: "admin@tabanalytics.com",
-    phone: "(555) 123-4567",
-    role: "Administrator"
-  });
+  // Profile settings state
+  const [profileSettings, setProfileSettings] = useState(settings.profile);
 
-  // Notification settings
-  const [notificationSettings, setNotificationSettings] = useState({
-    emailNotifications: true,
-    appNotifications: true,
-    marketingEmails: false,
-    newCustomerAlerts: true,
-    systemUpdates: true
-  });
+  // Notification settings state
+  const [notificationSettings, setNotificationSettings] = useState(settings.notifications);
 
-  // Company settings
-  const [companySettings, setCompanySettings] = useState({
-    companyName: "TAB Analytics, Inc.",
-    address: "123 Business Ave, Suite 500",
-    city: "San Francisco",
-    state: "CA",
-    zip: "94105",
-    phone: "(555) 987-6543",
-    website: "www.tabanalytics.com",
-    taxId: "12-3456789"
-  });
+  // Company settings state
+  const [companySettings, setCompanySettings] = useState(settings.company);
 
-  // Database settings
-  const [databaseSettings, setDatabaseSettings] = useState({
-    dbHost: "localhost",
-    dbPort: "3306",
-    dbName: "tab_analytics",
-    dbUser: "admin",
-    autoBackup: true,
-    backupFrequency: "daily"
-  });
+  // Database settings state
+  const [databaseSettings, setDatabaseSettings] = useState(settings.database);
+
+  // Update local state when settings are loaded
+  useEffect(() => {
+    if (!isLoading) {
+      setProfileSettings(settings.profile);
+      setNotificationSettings(settings.notifications);
+      setCompanySettings(settings.company);
+      setDatabaseSettings(settings.database);
+    }
+  }, [isLoading, settings]);
 
   const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -96,13 +87,34 @@ const Settings = () => {
     setDatabaseSettings(prev => ({ ...prev, [key]: value }));
   };
 
+  // Save settings by category
   const saveSettings = (section: string) => {
-    // In a real app, this would send the data to the API
-    toast({
-      title: "Settings saved",
-      description: `Your ${section} settings have been successfully updated.`,
-    });
+    switch(section) {
+      case 'profile':
+        saveProfileSettings(profileSettings);
+        break;
+      case 'notification':
+        saveNotificationSettings(notificationSettings);
+        break;
+      case 'company':
+        saveCompanySettings(companySettings);
+        break;
+      case 'database':
+      case 'backup':
+        saveDatabaseSettings(databaseSettings);
+        break;
+      default:
+        break;
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">

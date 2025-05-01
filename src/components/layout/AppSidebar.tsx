@@ -12,6 +12,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { Link, useLocation } from "react-router-dom";
+import { useAuth } from "@/hooks/use-auth";
 import {
   BarChart3,
   Users,
@@ -23,13 +24,14 @@ import {
   Database,
   CheckCircle,
   XCircle,
-  Building2, // Changed from BankIcon to Building2
+  Building2,
   LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function AppSidebar() {
   const location = useLocation();
+  const { logout, user } = useAuth();
   
   const isActive = (path: string) => {
     return location.pathname === path;
@@ -76,7 +78,7 @@ export function AppSidebar() {
     {
       title: "Bank Applications",
       path: "/bank-applications",
-      icon: Building2, // Changed from BankIcon to Building2
+      icon: Building2,
       subItems: [
         {
           title: "Submitted",
@@ -104,6 +106,12 @@ export function AppSidebar() {
           <Calculator className="w-8 h-8 text-primary" />
           <h1 className="text-xl font-semibold">TAB Analytics</h1>
         </div>
+        {user && (
+          <div className="mt-4 text-sm text-center">
+            <p className="font-medium">{user.name}</p>
+            <p className="text-muted-foreground">{user.role}</p>
+          </div>
+        )}
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
@@ -144,7 +152,10 @@ export function AppSidebar() {
       </SidebarContent>
       <SidebarFooter className="p-4">
         <SidebarMenuButton asChild className="w-full">
-          <button className="flex items-center space-x-2 text-destructive hover:bg-destructive/10">
+          <button 
+            className="flex items-center space-x-2 text-destructive hover:bg-destructive/10"
+            onClick={logout}
+          >
             <LogOut className="w-5 h-5" />
             <span>Logout</span>
           </button>
