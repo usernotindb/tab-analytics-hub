@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,74 +19,25 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Search, MoreHorizontal, Eye, Download, Printer, CheckCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-
-interface BankApplication {
-  id: number;
-  appId: string;
-  userId: string;
-  customer: string;
-  bank: string;
-  submissionDate: string;
-  status: 'pending' | 'approved' | 'rejected';
-  product: string;
-}
-
-// Sample data of submitted bank applications
-const submittedApplications: BankApplication[] = [
-  {
-    id: 1,
-    appId: "BA-2023-001",
-    userId: "14545807",
-    customer: "Azteca Tax Systems",
-    bank: "First National Bank",
-    submissionDate: "2023-01-20",
-    status: 'approved',
-    product: "Business Loan",
-  },
-  {
-    id: 2,
-    appId: "BA-2023-002",
-    userId: "14545808",
-    customer: "Global Tax Solutions",
-    bank: "Citizens Bank",
-    submissionDate: "2023-02-15",
-    status: 'pending',
-    product: "Line of Credit",
-  },
-  {
-    id: 3,
-    appId: "BA-2023-003",
-    userId: "14545809",
-    customer: "Premier Tax Services",
-    bank: "Tax Refund Bank",
-    submissionDate: "2023-03-10",
-    status: 'approved',
-    product: "Advance Loan",
-  },
-  {
-    id: 4,
-    appId: "BA-2023-004",
-    userId: "14545810",
-    customer: "Advanced Tax Pros",
-    bank: "Capital One",
-    submissionDate: "2023-03-25",
-    status: 'rejected',
-    product: "Business Credit Card",
-  },
-];
+import { useBankApplications } from "@/hooks/use-bank-applications";
 
 const BankApplicationsSubmitted = () => {
+  const { applications, isLoading, loadApplicationsByStatus, isDatabaseMode } = useBankApplications();
   const [searchTerm, setSearchTerm] = useState("");
 
-  const filteredApplications = submittedApplications.filter((app) => {
+  useEffect(() => {
+    loadApplicationsByStatus('submitted');
+  }, []);
+
+  const filteredApplications = applications.filter((app) => {
     const searchTermLower = searchTerm.toLowerCase();
     return (
-      app.appId.toLowerCase().includes(searchTermLower) ||
-      app.userId.toLowerCase().includes(searchTermLower) ||
-      app.customer.toLowerCase().includes(searchTermLower) ||
-      app.bank.toLowerCase().includes(searchTermLower) ||
+      app.applicationId?.toLowerCase().includes(searchTermLower) ||
+      app.userId?.toLowerCase().includes(searchTermLower) ||
+      app.customerName?.toLowerCase().includes(searchTermLower) ||
+      app.bankName.toLowerCase().includes(searchTermLower) ||
       app.product.toLowerCase().includes(searchTermLower) ||
-      app.status.toLowerCase().includes(searchTermLower)
+      app.applicationStatus.toLowerCase().includes(searchTermLower)
     );
   });
 
@@ -96,12 +47,22 @@ const BankApplicationsSubmitted = () => {
         return <Badge className="bg-green-500">Approved</Badge>;
       case 'pending':
         return <Badge className="bg-yellow-500">Pending</Badge>;
-      case 'rejected':
-        return <Badge className="bg-red-500">Rejected</Badge>;
+      case 'denied':
+        return <Badge className="bg-red-500">Denied</Badge>;
+      case 'submitted':
+        return <Badge className="bg-blue-500">Submitted</Badge>;
       default:
         return <Badge>Unknown</Badge>;
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -110,12 +71,13 @@ const BankApplicationsSubmitted = () => {
           <h1 className="text-3xl font-bold tracking-tight">Submitted Bank Applications</h1>
           <p className="text-muted-foreground mt-1">
             Showing all bank applications that have been submitted to financial institutions
+            {!isDatabaseMode && " (Demo mode)"}
           </p>
         </div>
         
         <div className="flex items-center gap-2">
           <CheckCircle className="h-5 w-5 text-green-500" />
-          <span className="text-green-500 font-medium">{submittedApplications.length} Submitted</span>
+          <span className="text-green-500 font-medium">{filteredApplications.length} Submitted</span>
         </div>
       </div>
 
@@ -143,6 +105,7 @@ const BankApplicationsSubmitted = () => {
                   <TableHead>Customer</TableHead>
                   <TableHead className="hidden md:table-cell">Bank</TableHead>
                   <TableHead className="hidden md:table-cell">Product</TableHead>
+                  <TableHead className="hidden lg:table-cell">Amount</TableHead>
                   <TableHead className="hidden lg:table-cell">Submission Date</TableHead>
                   <TableHead className="hidden lg:table-cell">Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -151,21 +114,24 @@ const BankApplicationsSubmitted = () => {
               <TableBody>
                 {filteredApplications.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="h-24 text-center">
+                    <TableCell colSpan={9} className="h-24 text-center">
                       No submitted applications found.
                     </TableCell>
                   </TableRow>
                 ) : (
                   filteredApplications.map((app) => (
                     <TableRow key={app.id}>
-                      <TableCell className="font-medium">{app.appId}</TableCell>
+                      <TableCell className="font-medium">{app.applicationId}</TableCell>
                       <TableCell>{app.userId}</TableCell>
-                      <TableCell>{app.customer}</TableCell>
-                      <TableCell className="hidden md:table-cell">{app.bank}</TableCell>
+                      <TableCell>{app.customerName}</TableCell>
+                      <TableCell className="hidden md:table-cell">{app.bankName}</TableCell>
                       <TableCell className="hidden md:table-cell">{app.product}</TableCell>
+                      <TableCell className="hidden lg:table-cell">
+                        {app.amount ? `$${app.amount.toLocaleString()}` : 'N/A'}
+                      </TableCell>
                       <TableCell className="hidden lg:table-cell">{app.submissionDate}</TableCell>
                       <TableCell className="hidden lg:table-cell">
-                        {getStatusBadge(app.status)}
+                        {getStatusBadge(app.applicationStatus)}
                       </TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
