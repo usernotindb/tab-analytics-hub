@@ -28,66 +28,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Search, Plus, MoreHorizontal, Eye, Edit, Trash } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-// Define the Portal interface
-interface Portal {
-  id: number;
-  userId: string;
-  company: string;
-  software: string;
-  type: string;
-  userType: string;
-  installed: boolean;
-  license: string;
-  installed_by: string;
-}
-
-// Sample data - in a real app, this would come from your API
-const portalData: Portal[] = [
-  {
-    id: 1,
-    userId: "14545807",
-    company: "Azteca Tax Systems",
-    software: "Xlink",
-    type: "Desktop",
-    userType: "Master User",
-    installed: true,
-    license: "1040 License",
-    installed_by: "John Doe",
-  },
-  {
-    id: 2,
-    userId: "14545808",
-    company: "Global Tax Solutions",
-    software: "TaxWeb",
-    type: "Online",
-    userType: "Admin",
-    installed: true,
-    license: "Full Service",
-    installed_by: "Jane Smith",
-  },
-  {
-    id: 3,
-    userId: "14545809",
-    company: "Premier Tax Services",
-    software: "TaxPro",
-    type: "Desktop",
-    userType: "Standard User",
-    installed: false,
-    license: "1040 License",
-    installed_by: "N/A",
-  },
-];
+import { usePortals } from "@/hooks/use-portals";
 
 // Component for the installation form
-const InstallationForm = ({ onComplete }: { onComplete: (data: Partial<Portal>) => void }) => {
+const InstallationForm = ({ onComplete }: { onComplete: (data: Partial<any>) => void }) => {
   const [formData, setFormData] = useState({
-    userId: "",
-    company: "",
-    software: "",
-    type: "Desktop",
-    userType: "Standard User",
-    license: ""
+    customerId: 1, // This should be selected from available customers
+    portalName: "",
+    portalUrl: "",
+    status: "pending" as const
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -103,83 +52,57 @@ const InstallationForm = ({ onComplete }: { onComplete: (data: Partial<Portal>) 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <label htmlFor="userId" className="text-sm font-medium">User ID</label>
+        <label htmlFor="customerId" className="text-sm font-medium">Customer ID</label>
         <Input 
-          id="userId" 
-          name="userId" 
-          value={formData.userId} 
+          id="customerId" 
+          name="customerId" 
+          type="number"
+          value={formData.customerId} 
           onChange={handleChange} 
-          placeholder="Enter User ID" 
+          placeholder="Enter Customer ID" 
           required
         />
       </div>
       
       <div className="space-y-2">
-        <label htmlFor="company" className="text-sm font-medium">Company</label>
+        <label htmlFor="portalName" className="text-sm font-medium">Portal Name</label>
         <Input 
-          id="company" 
-          name="company" 
-          value={formData.company} 
+          id="portalName" 
+          name="portalName" 
+          value={formData.portalName} 
           onChange={handleChange} 
-          placeholder="Enter Company Name" 
+          placeholder="Enter Portal Name" 
           required
         />
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="software" className="text-sm font-medium">Software</label>
+        <label htmlFor="portalUrl" className="text-sm font-medium">Portal URL</label>
         <Input 
-          id="software" 
-          name="software" 
-          value={formData.software} 
+          id="portalUrl" 
+          name="portalUrl" 
+          type="url"
+          value={formData.portalUrl} 
           onChange={handleChange} 
-          placeholder="Enter Software Name" 
-          required
+          placeholder="Enter Portal URL" 
         />
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="type" className="text-sm font-medium">Type</label>
+        <label htmlFor="status" className="text-sm font-medium">Status</label>
         <select 
-          id="type" 
-          name="type" 
-          value={formData.type} 
+          id="status" 
+          name="status" 
+          value={formData.status} 
           onChange={handleChange}
           className="w-full p-2 border rounded-md"
           required
         >
-          <option value="Desktop">Desktop</option>
-          <option value="Online">Online</option>
-          <option value="Hybrid">Hybrid</option>
+          <option value="pending">Pending</option>
+          <option value="ready">Ready</option>
+          <option value="not_ready">Not Ready</option>
+          <option value="error">Error</option>
         </select>
-      </div>
-
-      <div className="space-y-2">
-        <label htmlFor="userType" className="text-sm font-medium">User Type</label>
-        <select 
-          id="userType" 
-          name="userType" 
-          value={formData.userType} 
-          onChange={handleChange}
-          className="w-full p-2 border rounded-md"
-          required
-        >
-          <option value="Master User">Master User</option>
-          <option value="Admin">Admin</option>
-          <option value="Standard User">Standard User</option>
-        </select>
-      </div>
-
-      <div className="space-y-2">
-        <label htmlFor="license" className="text-sm font-medium">License</label>
-        <Input 
-          id="license" 
-          name="license" 
-          value={formData.license} 
-          onChange={handleChange} 
-          placeholder="Enter License Information" 
-          required
-        />
       </div>
 
       <div className="flex justify-end">
@@ -192,59 +115,82 @@ const InstallationForm = ({ onComplete }: { onComplete: (data: Partial<Portal>) 
 const Portals = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [portals, setPortals] = useState<Portal[]>(portalData);
+  const { portals, isLoading, addPortal, removePortal, isDatabaseMode } = usePortals();
   const [searchTerm, setSearchTerm] = useState("");
   const [isFormOpen, setIsFormOpen] = useState(false);
 
   const filteredPortals = portals.filter((portal) => {
     const searchTermLower = searchTerm.toLowerCase();
     return (
-      portal.userId.toLowerCase().includes(searchTermLower) ||
-      portal.company.toLowerCase().includes(searchTermLower) ||
-      portal.software.toLowerCase().includes(searchTermLower) ||
-      portal.type.toLowerCase().includes(searchTermLower) ||
-      portal.userType.toLowerCase().includes(searchTermLower) ||
-      portal.license.toLowerCase().includes(searchTermLower)
+      portal.userId?.toLowerCase().includes(searchTermLower) ||
+      portal.company?.toLowerCase().includes(searchTermLower) ||
+      portal.portalName.toLowerCase().includes(searchTermLower) ||
+      portal.software?.toLowerCase().includes(searchTermLower) ||
+      portal.type?.toLowerCase().includes(searchTermLower) ||
+      portal.userType?.toLowerCase().includes(searchTermLower) ||
+      portal.license?.toLowerCase().includes(searchTermLower)
     );
   });
 
-  const handleDelete = (id: number) => {
-    setPortals(portals.filter(portal => portal.id !== id));
-    toast({
-      title: "Installation deleted",
-      description: "The installation has been successfully removed.",
-    });
+  const handleDelete = async (id: number) => {
+    const result = await removePortal(id);
+    if (!result.success) {
+      toast({
+        title: "Error deleting portal",
+        description: result.message || "Failed to delete portal",
+        variant: "destructive"
+      });
+    }
   };
 
-  const handleAddInstallation = (data: Partial<Portal>) => {
-    const newPortal: Portal = {
-      id: portals.length + 1,
-      userId: data.userId || "",
-      company: data.company || "",
-      software: data.software || "",
-      type: data.type || "Desktop",
-      userType: data.userType || "Standard User",
-      installed: true,
-      license: data.license || "",
-      installed_by: "Current User", // In a real app, this would be the logged-in user
-    };
-    
-    setPortals([...portals, newPortal]);
-    setIsFormOpen(false);
-    toast({
-      title: "Installation added",
-      description: "The new installation has been successfully added.",
+  const handleAddInstallation = async (data: any) => {
+    const result = await addPortal({
+      customerId: Number(data.customerId),
+      portalName: data.portalName,
+      portalUrl: data.portalUrl,
+      status: data.status
     });
+    
+    if (result.success) {
+      setIsFormOpen(false);
+      if (!isDatabaseMode) {
+        toast({
+          title: "Installation added",
+          description: "The new installation has been successfully added.",
+        });
+      }
+    } else {
+      toast({
+        title: "Error adding installation",
+        description: result.message || "Failed to add installation",
+        variant: "destructive"
+      });
+    }
   };
 
   const viewDetails = (id: number) => {
     navigate(`/portals/${id}`);
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold tracking-tight">Portals & Installations</h1>
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Portals & Installations</h1>
+          {!isDatabaseMode && (
+            <p className="text-sm text-muted-foreground mt-1">
+              Demo mode - Configure database in Settings to save data permanently
+            </p>
+          )}
+        </div>
         
         <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
           <DialogTrigger asChild>

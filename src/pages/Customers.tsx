@@ -5,13 +5,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { CustomerTable } from "@/components/customer/CustomerTable";
 import { CustomerSearch } from "@/components/customer/CustomerSearch";
 import { AddCustomerDialog } from "@/components/customer/AddCustomerDialog";
-import { Customer } from "@/types/customer";
-import { sampleCustomers } from "@/data/sampleCustomers";
+import { useCustomers } from "@/hooks/use-customers";
 import { CustomerFilters } from "@/components/customer/FilterDialog";
 
 const Customers = () => {
   const { toast } = useToast();
-  const [customers, setCustomers] = useState<Customer[]>(sampleCustomers);
+  const { customers, isLoading, addCustomer, removeCustomer, isDatabaseMode } = useCustomers();
   const [searchTerm, setSearchTerm] = useState("");
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [filters, setFilters] = useState<CustomerFilters>({
@@ -38,42 +37,55 @@ const Customers = () => {
     return matchesSearch && matchesPortalFilter && matchesBankFilter && matchesSoftwareFilter;
   });
 
-  const handleDelete = (id: number) => {
-    setCustomers(customers.filter((customer) => customer.id !== id));
-    toast({
-      title: "Customer deleted",
-      description: "The customer has been successfully removed.",
-    });
+  const handleDelete = async (id: number) => {
+    const result = await removeCustomer(id);
+    if (!result.success) {
+      toast({
+        title: "Error deleting customer",
+        description: result.message || "Failed to delete customer",
+        variant: "destructive"
+      });
+    }
   };
 
-  const addNewCustomer = (data: any) => {
-    const newCustomer: Customer = {
-      id: customers.length + 1,
-      userId: `1454${Math.floor(Math.random() * 10000)}`,
-      efin: data.efin || "",
-      company: data.company || "",
-      firstName: data.firstName || "",
-      lastName: data.lastName || "",
-      email: data.email || "",
-      businessPhone: data.businessPhone || "",
-      cellPhone: data.cellPhone || "",
-      portalReady: false,
-      bankAppSubmitted: false,
-      softwarePaid: false,
-    };
-    
-    setCustomers([...customers, newCustomer]);
-    setIsWizardOpen(false);
-    toast({
-      title: "Customer added",
-      description: "The new customer has been successfully added.",
-    });
+  const addNewCustomer = async (data: any) => {
+    const result = await addCustomer(data);
+    if (result.success) {
+      setIsWizardOpen(false);
+      if (!isDatabaseMode) {
+        toast({
+          title: "Customer added",
+          description: "The new customer has been successfully added.",
+        });
+      }
+    } else {
+      toast({
+        title: "Error adding customer",
+        description: result.message || "Failed to add customer",
+        variant: "destructive"
+      });
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold tracking-tight">Tax Customers</h1>
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Tax Customers</h1>
+          {!isDatabaseMode && (
+            <p className="text-sm text-muted-foreground mt-1">
+              Demo mode - Configure database in Settings to save data permanently
+            </p>
+          )}
+        </div>
         
         <AddCustomerDialog 
           isOpen={isWizardOpen}

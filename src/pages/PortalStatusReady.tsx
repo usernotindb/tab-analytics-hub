@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,60 +19,39 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Search, MoreHorizontal, Eye, Edit, Trash, CheckCircle } from "lucide-react";
-
-interface Portal {
-  id: number;
-  userId: string;
-  company: string;
-  software: string;
-  installationDate: string;
-  installedBy: string;
-  lastUpdated: string;
-}
-
-// Sample data of ready portals
-const readyPortals: Portal[] = [
-  {
-    id: 1,
-    userId: "14545807",
-    company: "Azteca Tax Systems",
-    software: "Xlink",
-    installationDate: "2023-01-15",
-    installedBy: "John Doe",
-    lastUpdated: "2023-02-10",
-  },
-  {
-    id: 2,
-    userId: "14545808",
-    company: "Global Tax Solutions",
-    software: "TaxWeb",
-    installationDate: "2023-03-05",
-    installedBy: "Jane Smith",
-    lastUpdated: "2023-03-20",
-  },
-  {
-    id: 4,
-    userId: "14545812",
-    company: "Elite Tax Advisors",
-    software: "TaxPro Premium",
-    installationDate: "2023-02-18",
-    installedBy: "Michael Johnson",
-    lastUpdated: "2023-04-01",
-  },
-];
+import { usePortals } from "@/hooks/use-portals";
 
 const PortalStatusReady = () => {
+  const { portals, isLoading, loadPortalsByStatus, removePortal, isDatabaseMode } = usePortals();
   const [searchTerm, setSearchTerm] = useState("");
 
-  const filteredPortals = readyPortals.filter((portal) => {
+  useEffect(() => {
+    loadPortalsByStatus('ready');
+  }, []);
+
+  const filteredPortals = portals.filter((portal) => {
     const searchTermLower = searchTerm.toLowerCase();
     return (
-      portal.userId.toLowerCase().includes(searchTermLower) ||
-      portal.company.toLowerCase().includes(searchTermLower) ||
-      portal.software.toLowerCase().includes(searchTermLower) ||
-      portal.installedBy.toLowerCase().includes(searchTermLower)
+      portal.userId?.toLowerCase().includes(searchTermLower) ||
+      portal.company?.toLowerCase().includes(searchTermLower) ||
+      portal.software?.toLowerCase().includes(searchTermLower) ||
+      portal.installedBy?.toLowerCase().includes(searchTermLower)
     );
   });
+
+  const handleDelete = async (id: number) => {
+    await removePortal(id);
+    // Refresh the ready portals list
+    loadPortalsByStatus('ready');
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -81,12 +60,13 @@ const PortalStatusReady = () => {
           <h1 className="text-3xl font-bold tracking-tight">Ready Portals</h1>
           <p className="text-muted-foreground mt-1">
             Showing all portals that are ready and fully installed
+            {!isDatabaseMode && " (Demo mode)"}
           </p>
         </div>
         
         <div className="flex items-center gap-2">
           <CheckCircle className="h-5 w-5 text-green-500" />
-          <span className="text-green-500 font-medium">{readyPortals.length} Ready</span>
+          <span className="text-green-500 font-medium">{filteredPortals.length} Ready</span>
         </div>
       </div>
 
@@ -131,9 +111,9 @@ const PortalStatusReady = () => {
                       <TableCell className="font-medium">{portal.userId}</TableCell>
                       <TableCell>{portal.company}</TableCell>
                       <TableCell>{portal.software}</TableCell>
-                      <TableCell className="hidden md:table-cell">{portal.installationDate}</TableCell>
+                      <TableCell className="hidden md:table-cell">{portal.createdAt?.split('T')[0]}</TableCell>
                       <TableCell className="hidden lg:table-cell">{portal.installedBy}</TableCell>
-                      <TableCell className="hidden lg:table-cell">{portal.lastUpdated}</TableCell>
+                      <TableCell className="hidden lg:table-cell">{portal.updatedAt?.split('T')[0]}</TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -153,7 +133,10 @@ const PortalStatusReady = () => {
                               <Edit className="mr-2 h-4 w-4" />
                               Edit portal
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive focus:text-destructive">
+                            <DropdownMenuItem 
+                              className="text-destructive focus:text-destructive"
+                              onClick={() => handleDelete(portal.id)}
+                            >
                               <Trash className="mr-2 h-4 w-4" />
                               Delete
                             </DropdownMenuItem>
