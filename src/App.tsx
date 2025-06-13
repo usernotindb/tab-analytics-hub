@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { MainLayout } from "./components/layout/MainLayout";
 import { DatabaseProvider } from "./hooks/use-database";
 import { AuthProvider } from "./hooks/use-auth";
+import { NotificationBell } from "./components/common/NotificationBell";
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
 import Customers from "./pages/Customers";
@@ -40,133 +41,143 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+// Header component with notification bell
+const AppHeader = () => (
+  <div className="fixed top-0 right-0 z-50 p-4">
+    <NotificationBell />
+  </div>
+);
+
 // Wrapper to provide auth outside of routes
 const AppRoutes = () => {
   return (
-    <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route 
-        path="/" 
-        element={
-          <ProtectedRoute>
-            <MainLayout>
-              <Dashboard />
-            </MainLayout>
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/customers" 
-        element={
-          <ProtectedRoute>
-            <MainLayout>
-              <Customers />
-            </MainLayout>
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/customers/:id" 
-        element={
-          <ProtectedRoute>
-            <MainLayout>
-              <CustomerDetails />
-            </MainLayout>
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/portals" 
-        element={
-          <ProtectedRoute>
-            <MainLayout>
-              <Portals />
-            </MainLayout>
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/portals/:id" 
-        element={
-          <ProtectedRoute>
-            <MainLayout>
-              <PortalDetails />
-            </MainLayout>
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/paid-software" 
-        element={
-          <ProtectedRoute>
-            <MainLayout>
-              <PaidSoftware />
-            </MainLayout>
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/portal-status/ready" 
-        element={
-          <ProtectedRoute>
-            <MainLayout>
-              <PortalStatusReady />
-            </MainLayout>
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/portal-status/not-ready" 
-        element={
-          <ProtectedRoute>
-            <MainLayout>
-              <PortalStatusNotReady />
-            </MainLayout>
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/bank-applications/submitted" 
-        element={
-          <ProtectedRoute>
-            <MainLayout>
-              <BankApplicationsSubmitted />
-            </MainLayout>
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/bank-applications/unsubmitted" 
-        element={
-          <ProtectedRoute>
-            <MainLayout>
-              <BankApplicationsUnsubmitted />
-            </MainLayout>
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/settings" 
-        element={
-          <ProtectedRoute>
-            <MainLayout>
-              <Settings />
-            </MainLayout>
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/navigation-audit" 
-        element={
-          <ProtectedRoute>
-            <MainLayout>
-              <NavigationAudit />
-            </MainLayout>
-          </ProtectedRoute>
-        } 
-      />
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+    <>
+      <AppHeader />
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route 
+          path="/" 
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <Dashboard />
+              </MainLayout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/customers" 
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <Customers />
+              </MainLayout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/customers/:id" 
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <CustomerDetails />
+              </MainLayout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/portals" 
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <Portals />
+              </MainLayout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/portals/:id" 
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <PortalDetails />
+              </MainLayout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/paid-software" 
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <PaidSoftware />
+              </MainLayout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/portal-status/ready" 
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <PortalStatusReady />
+              </MainLayout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/portal-status/not-ready" 
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <PortalStatusNotReady />
+              </MainLayout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/bank-applications/submitted" 
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <BankApplicationsSubmitted />
+              </MainLayout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/bank-applications/unsubmitted" 
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <BankApplicationsUnsubmitted />
+              </MainLayout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/settings" 
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <Settings />
+              </MainLayout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/navigation-audit" 
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                <NavigationAudit />
+              </MainLayout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </>
   );
 };
 

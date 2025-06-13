@@ -12,19 +12,19 @@ export interface ExportOptions {
 }
 
 export const exportCustomersToCSV = (customers: Customer[]): string => {
-  const headers = ['ID', 'User ID', 'First Name', 'Last Name', 'Company', 'Email', 'Phone', 'Address', 'Created Date'];
+  const headers = ['ID', 'User ID', 'EFIN', 'Company', 'First Name', 'Last Name', 'Email', 'Business Phone', 'Cell Phone'];
   const csvContent = [
     headers.join(','),
     ...customers.map(customer => [
       customer.id,
       customer.userId,
+      customer.efin,
+      customer.company,
       customer.firstName,
       customer.lastName,
-      customer.company,
       customer.email,
-      customer.phone,
-      `"${customer.address}"`,
-      customer.createdDate
+      customer.businessPhone,
+      customer.cellPhone
     ].join(','))
   ].join('\n');
 
