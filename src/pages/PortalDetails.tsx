@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -368,7 +367,7 @@ const PortalDetails = () => {
                   </div>
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Installed By</p>
-                    <p>{portal.installed_by}</p>
+                    <p>{portal.installedBy}</p>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Installation Status</p>
