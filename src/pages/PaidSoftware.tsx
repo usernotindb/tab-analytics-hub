@@ -1,6 +1,7 @@
 
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useSoftware } from "@/hooks/use-software";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,146 +26,175 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Search, Plus, MoreHorizontal, Eye, Edit, Trash, DollarSign } from "lucide-react";
-
-interface Software {
-  id: number;
-  userId: string;
-  customer: string;
-  software: string;
-  licenses: number;
-  price: number;
-  status: 'paid' | 'pending' | 'overdue';
-  purchaseDate: string;
-  nextBillingDate: string;
-}
-
-const sampleSoftware: Software[] = [
-  {
-    id: 1,
-    userId: "14545807",
-    customer: "Azteca Tax Systems",
-    software: "TaxPro Premium",
-    licenses: 3,
-    price: 599.99,
-    status: 'paid',
-    purchaseDate: "2023-01-15",
-    nextBillingDate: "2024-01-15",
-  },
-  {
-    id: 2,
-    userId: "14545808",
-    customer: "Global Tax Solutions",
-    software: "TaxWeb Enterprise",
-    licenses: 5,
-    price: 1299.99,
-    status: 'pending',
-    purchaseDate: "2023-03-10",
-    nextBillingDate: "2024-03-10",
-  },
-  {
-    id: 3,
-    userId: "14545809",
-    customer: "Premier Tax Services",
-    software: "TaxPro Basic",
-    licenses: 2,
-    price: 299.99,
-    status: 'overdue',
-    purchaseDate: "2023-02-20",
-    nextBillingDate: "2024-02-20",
-  },
-];
+import { Search, Plus, MoreHorizontal, Eye, Edit, Trash, DollarSign, Database } from "lucide-react";
+import { Software } from "@/utils/database/softwareOperations";
 
 // Payment form component
 const PaymentForm = ({ onComplete }: { onComplete: (data: Partial<Software>) => void }) => {
   const [formData, setFormData] = useState({
+    customerId: 1,
     userId: "",
     customer: "",
-    software: "",
+    softwareName: "",
+    version: "",
+    licenseKey: "",
     licenses: 1,
     price: 0,
+    status: 'paid' as const,
+    notes: ""
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ 
       ...prev, 
-      [name]: name === 'licenses' || name === 'price' ? Number(value) : value 
+      [name]: name === 'licenses' || name === 'price' || name === 'customerId' ? Number(value) : value 
     }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onComplete(formData);
+    
+    const today = new Date();
+    const nextYear = new Date();
+    nextYear.setFullYear(today.getFullYear() + 1);
+    
+    const softwareData = {
+      ...formData,
+      purchaseDate: today.toISOString().split('T')[0],
+      expirationDate: nextYear.toISOString().split('T')[0],
+      nextBillingDate: nextYear.toISOString().split('T')[0],
+      cost: formData.price
+    };
+    
+    onComplete(softwareData);
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <label htmlFor="userId" className="text-sm font-medium">User ID</label>
-        <Input 
-          id="userId" 
-          name="userId" 
-          value={formData.userId} 
-          onChange={handleChange} 
-          placeholder="Enter User ID" 
-          required
-        />
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <label htmlFor="userId" className="text-sm font-medium">User ID</label>
+          <Input 
+            id="userId" 
+            name="userId" 
+            value={formData.userId} 
+            onChange={handleChange} 
+            placeholder="Enter User ID" 
+            required
+          />
+        </div>
+        
+        <div className="space-y-2">
+          <label htmlFor="customer" className="text-sm font-medium">Customer</label>
+          <Input 
+            id="customer" 
+            name="customer" 
+            value={formData.customer} 
+            onChange={handleChange} 
+            placeholder="Enter Customer Name" 
+            required
+          />
+        </div>
       </div>
-      
-      <div className="space-y-2">
-        <label htmlFor="customer" className="text-sm font-medium">Customer</label>
-        <Input 
-          id="customer" 
-          name="customer" 
-          value={formData.customer} 
-          onChange={handleChange} 
-          placeholder="Enter Customer Name" 
-          required
-        />
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <label htmlFor="softwareName" className="text-sm font-medium">Software Name</label>
+          <Input 
+            id="softwareName" 
+            name="softwareName" 
+            value={formData.softwareName} 
+            onChange={handleChange} 
+            placeholder="Enter Software Name" 
+            required
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label htmlFor="version" className="text-sm font-medium">Version</label>
+          <Input 
+            id="version" 
+            name="version" 
+            value={formData.version} 
+            onChange={handleChange} 
+            placeholder="e.g., 2024.1" 
+          />
+        </div>
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="software" className="text-sm font-medium">Software</label>
+        <label htmlFor="licenseKey" className="text-sm font-medium">License Key</label>
         <Input 
-          id="software" 
-          name="software" 
-          value={formData.software} 
+          id="licenseKey" 
+          name="licenseKey" 
+          value={formData.licenseKey} 
           onChange={handleChange} 
-          placeholder="Enter Software Name" 
-          required
+          placeholder="Enter License Key" 
         />
+      </div>
+
+      <div className="grid grid-cols-3 gap-4">
+        <div className="space-y-2">
+          <label htmlFor="licenses" className="text-sm font-medium">Number of Licenses</label>
+          <Input 
+            id="licenses" 
+            name="licenses" 
+            type="number" 
+            min="1"
+            value={formData.licenses} 
+            onChange={handleChange} 
+            required
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label htmlFor="price" className="text-sm font-medium">Price ($)</label>
+          <Input 
+            id="price" 
+            name="price" 
+            type="number" 
+            step="0.01" 
+            min="0"
+            value={formData.price} 
+            onChange={handleChange} 
+            required
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label htmlFor="status" className="text-sm font-medium">Status</label>
+          <select 
+            id="status" 
+            name="status" 
+            value={formData.status} 
+            onChange={handleChange}
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          >
+            <option value="paid">Paid</option>
+            <option value="pending">Pending</option>
+            <option value="overdue">Overdue</option>
+            <option value="active">Active</option>
+            <option value="expired">Expired</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="licenses" className="text-sm font-medium">Number of Licenses</label>
-        <Input 
-          id="licenses" 
-          name="licenses" 
-          type="number" 
-          min="1"
-          value={formData.licenses} 
+        <label htmlFor="notes" className="text-sm font-medium">Notes</label>
+        <textarea 
+          id="notes" 
+          name="notes" 
+          value={formData.notes} 
           onChange={handleChange} 
-          required
+          placeholder="Additional notes about the software..."
+          className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         />
       </div>
 
-      <div className="space-y-2">
-        <label htmlFor="price" className="text-sm font-medium">Price ($)</label>
-        <Input 
-          id="price" 
-          name="price" 
-          type="number" 
-          step="0.01" 
-          min="0"
-          value={formData.price} 
-          onChange={handleChange} 
-          required
-        />
-      </div>
-
-      <div className="flex justify-end">
-        <Button type="submit">Add Payment</Button>
+      <div className="flex justify-end gap-2">
+        <Button type="submit">Add Software</Button>
       </div>
     </form>
   );
@@ -172,80 +202,101 @@ const PaymentForm = ({ onComplete }: { onComplete: (data: Partial<Software>) => 
 
 const PaidSoftware = () => {
   const { toast } = useToast();
-  const [software, setSoftware] = useState<Software[]>(sampleSoftware);
-  const [searchTerm, setSearchTerm] = useState("");
+  const {
+    software,
+    stats,
+    isLoading,
+    statsLoading,
+    isAddingLoading,
+    isDeletingLoading,
+    addSoftwareRecord,
+    deleteSoftwareRecord,
+    updateSoftwareStatusRecord,
+    searchTerm,
+    setSearchTerm,
+    isConfigured
+  } = useSoftware();
+  
   const [isFormOpen, setIsFormOpen] = useState(false);
 
-  const filteredSoftware = software.filter((item) => {
-    const searchTermLower = searchTerm.toLowerCase();
-    return (
-      item.userId.toLowerCase().includes(searchTermLower) ||
-      item.customer.toLowerCase().includes(searchTermLower) ||
-      item.software.toLowerCase().includes(searchTermLower)
-    );
-  });
-
-  const handleDelete = (id: number) => {
-    setSoftware(software.filter(item => item.id !== id));
-    toast({
-      title: "Software payment deleted",
-      description: "The payment record has been successfully removed.",
-    });
+  const handleDelete = async (id: number) => {
+    try {
+      await deleteSoftwareRecord(id);
+    } catch (error) {
+      console.error("Error deleting software:", error);
+    }
   };
 
-  const handleAddPayment = (data: Partial<Software>) => {
-    const today = new Date();
-    const nextYear = new Date();
-    nextYear.setFullYear(today.getFullYear() + 1);
-    
-    const newSoftware: Software = {
-      id: software.length + 1,
-      userId: data.userId || "",
-      customer: data.customer || "",
-      software: data.software || "",
-      licenses: data.licenses || 1,
-      price: data.price || 0,
-      status: 'paid',
-      purchaseDate: today.toISOString().split('T')[0],
-      nextBillingDate: nextYear.toISOString().split('T')[0],
-    };
-    
-    setSoftware([...software, newSoftware]);
-    setIsFormOpen(false);
-    toast({
-      title: "Payment added",
-      description: "The new software payment has been successfully recorded.",
-    });
+  const handleAddPayment = async (data: Partial<Software>) => {
+    try {
+      await addSoftwareRecord(data as Omit<Software, 'id' | 'created_at' | 'updated_at'>);
+      setIsFormOpen(false);
+    } catch (error) {
+      console.error("Error adding software:", error);
+    }
+  };
+
+  const handleStatusChange = async (id: number, status: Software['status']) => {
+    try {
+      await updateSoftwareStatusRecord(id, status);
+    } catch (error) {
+      console.error("Error updating status:", error);
+    }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'paid':
+      case 'active':
         return 'bg-green-500';
       case 'pending':
         return 'bg-yellow-500';
       case 'overdue':
+      case 'expired':
         return 'bg-red-500';
+      case 'cancelled':
+        return 'bg-gray-500';
       default:
         return 'bg-gray-500';
     }
   };
 
+  if (isLoading || statsLoading) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <div className="text-center">
+          <div className="text-lg font-medium">Loading software data...</div>
+          <div className="text-sm text-muted-foreground mt-2">
+            {isConfigured ? "Fetching from database" : "Loading demo data"}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold tracking-tight">Paid Software</h1>
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Paid Software</h1>
+          <div className="flex items-center gap-2 mt-2">
+            <Database className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">
+              {isConfigured ? "Connected to database" : "Using demo data"}
+            </span>
+          </div>
+        </div>
         
         <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
           <DialogTrigger asChild>
-            <Button className="space-x-2">
+            <Button className="space-x-2" disabled={isAddingLoading}>
               <Plus className="h-4 w-4" />
-              <span>Add Payment</span>
+              <span>{isAddingLoading ? "Adding..." : "Add Software"}</span>
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
+          <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Add New Software Payment</DialogTitle>
+              <DialogTitle>Add New Software License</DialogTitle>
             </DialogHeader>
             <div className="py-4">
               <PaymentForm onComplete={handleAddPayment} />
@@ -254,7 +305,7 @@ const PaidSoftware = () => {
         </Dialog>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Paid</CardTitle>
@@ -262,10 +313,10 @@ const PaidSoftware = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              ${software.filter(s => s.status === 'paid').reduce((sum, item) => sum + item.price, 0).toFixed(2)}
+              ${stats?.totalPaid.toFixed(2) || "0.00"}
             </div>
             <p className="text-xs text-muted-foreground">
-              {software.filter(s => s.status === 'paid').length} software packages
+              {stats?.paidCount || 0} software packages
             </p>
           </CardContent>
         </Card>
@@ -276,10 +327,10 @@ const PaidSoftware = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              ${software.filter(s => s.status === 'pending').reduce((sum, item) => sum + item.price, 0).toFixed(2)}
+              ${stats?.totalPending.toFixed(2) || "0.00"}
             </div>
             <p className="text-xs text-muted-foreground">
-              {software.filter(s => s.status === 'pending').length} software packages
+              {stats?.pendingCount || 0} software packages
             </p>
           </CardContent>
         </Card>
@@ -290,10 +341,24 @@ const PaidSoftware = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              ${software.filter(s => s.status === 'overdue').reduce((sum, item) => sum + item.price, 0).toFixed(2)}
+              ${stats?.totalOverdue.toFixed(2) || "0.00"}
             </div>
             <p className="text-xs text-muted-foreground">
-              {software.filter(s => s.status === 'overdue').length} software packages
+              {stats?.overdueCount || 0} software packages
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Licenses</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {stats?.totalLicenses || 0}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Active licenses
             </p>
           </CardContent>
         </Card>
@@ -305,7 +370,7 @@ const PaidSoftware = () => {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input 
-                placeholder="Search software payments..." 
+                placeholder="Search software licenses..." 
                 className="pl-10" 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -321,6 +386,7 @@ const PaidSoftware = () => {
                   <TableHead>User ID</TableHead>
                   <TableHead>Customer</TableHead>
                   <TableHead>Software</TableHead>
+                  <TableHead className="hidden md:table-cell">Version</TableHead>
                   <TableHead className="hidden md:table-cell">Licenses</TableHead>
                   <TableHead className="hidden md:table-cell">Price</TableHead>
                   <TableHead className="hidden lg:table-cell">Status</TableHead>
@@ -329,18 +395,26 @@ const PaidSoftware = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredSoftware.length === 0 ? (
+                {software.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="h-24 text-center">
-                      No software payments found.
+                    <TableCell colSpan={9} className="h-24 text-center">
+                      No software licenses found.
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredSoftware.map((item) => (
+                  software.map((item) => (
                     <TableRow key={item.id}>
                       <TableCell className="font-medium">{item.userId}</TableCell>
                       <TableCell>{item.customer}</TableCell>
-                      <TableCell>{item.software}</TableCell>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">{item.softwareName}</div>
+                          {item.licenseKey && (
+                            <div className="text-xs text-muted-foreground">{item.licenseKey}</div>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">{item.version || "N/A"}</TableCell>
                       <TableCell className="hidden md:table-cell">{item.licenses}</TableCell>
                       <TableCell className="hidden md:table-cell">${item.price.toFixed(2)}</TableCell>
                       <TableCell className="hidden lg:table-cell">
@@ -353,7 +427,7 @@ const PaidSoftware = () => {
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
+                            <Button variant="ghost" size="icon" disabled={isDeletingLoading}>
                               <MoreHorizontal className="h-4 w-4" />
                               <span className="sr-only">Open menu</span>
                             </Button>
@@ -365,7 +439,13 @@ const PaidSoftware = () => {
                             </DropdownMenuItem>
                             <DropdownMenuItem>
                               <Edit className="mr-2 h-4 w-4" />
-                              Edit payment
+                              Edit license
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleStatusChange(item.id, 'active')}>
+                              Mark as Active
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleStatusChange(item.id, 'expired')}>
+                              Mark as Expired
                             </DropdownMenuItem>
                             <DropdownMenuItem 
                               className="text-destructive focus:text-destructive"
